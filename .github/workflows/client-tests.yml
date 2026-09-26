@@ -103,7 +103,8 @@ jobs:
         run: |
           cd apps/server
           pnpm build
-          NODE_ENV=testing pnpm start &
+          # .env.example sets PORT=24300; the testing client (.env.testing) calls the API on 43000
+          PORT=43000 NODE_ENV=testing pnpm start &
           echo "Waiting for backend on port 43000"
           wait-for-it -t 30 localhost:43000
           if [ $? -ne 0 ]; then
