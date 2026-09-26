@@ -1,0 +1,49 @@
+name: Typecheck and Build
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: typecheck-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # End-to-end tests run in the Client Tests workflow; skip the Cypress binary here
+      CYPRESS_INSTALL_BINARY: "0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          # Version comes from "packageManager" in package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm run build:packages
+
+      - name: Typecheck all apps
+        run: pnpm run typecheck
+
+      - name: Build all apps
+        run: pnpm run build
