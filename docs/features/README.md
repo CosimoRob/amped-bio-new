@@ -10,6 +10,7 @@ Drafted by Claude for Rob Frasca, 2026-09-26. Each spec has research, an overvie
 | 10 | SEO and LLM Discoverability (PR #1, branch `feature/seo-llm-discoverability`) | Built, in review |
 | 20 | [Content System](content-system.md) | Spec for review |
 | 21 | [Access Gating Engine](access-gating-engine.md) | Spec for review |
+| 22 to 24 | [Fan Loyalty: Fan Graph, Rewards Programs, Superfans](fan-loyalty.md) | Overview for review |
 
 ## Shared contract
 
