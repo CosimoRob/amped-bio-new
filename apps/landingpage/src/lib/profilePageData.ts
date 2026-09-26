@@ -30,6 +30,8 @@ export interface ProfilePageData {
   blocks: BlockType[];
   theme: Theme | null;
   hasCreatorPool: HandleOutput["hasCreatorPool"];
+  /** Whether search engines may index this profile */
+  indexable: boolean;
 }
 
 export const DEFAULT_HANDLE = "landingpage";
@@ -44,12 +46,36 @@ export const DEFAULT_PROFILE_DATA: ProfilePageData = {
     bio: "Empowering individuals and communities, enabling seamless transactions without intermediaries",
   },
   blocks: [
-    { id: 1, order: 0, type: "link", config: { platform: "twitter", url: "https://x.com/amped_bio", label: "Follow on X" } },
-    { id: 2, order: 1, type: "link", config: { platform: "github", url: "https://github.com/amplifydigital-web3", label: "Check out our Github" } },
-    { id: 3, order: 2, type: "link", config: { platform: "telegram", url: "https://t.me/npayme_network", label: "Connect on Telegram" } },
+    {
+      id: 1,
+      order: 0,
+      type: "link",
+      config: { platform: "twitter", url: "https://x.com/amped_bio", label: "Follow on X" },
+    },
+    {
+      id: 2,
+      order: 1,
+      type: "link",
+      config: {
+        platform: "github",
+        url: "https://github.com/amplifydigital-web3",
+        label: "Check out our Github",
+      },
+    },
+    {
+      id: 3,
+      order: 2,
+      type: "link",
+      config: {
+        platform: "telegram",
+        url: "https://t.me/npayme_network",
+        label: "Connect on Telegram",
+      },
+    },
   ],
   theme: null,
   hasCreatorPool: false,
+  indexable: false,
 };
 
 /**
@@ -58,7 +84,7 @@ export const DEFAULT_PROFILE_DATA: ProfilePageData = {
  * config, block config) meet the app's typed schemas.
  */
 export function mapGetHandleData(result: HandleOutput, handle: string): ProfilePageData {
-  const { user, theme, blocks: blocksRaw, hasCreatorPool } = result;
+  const { user, theme, blocks: blocksRaw, hasCreatorPool, indexable } = result;
   return {
     profile: {
       id: user.id,
@@ -74,5 +100,6 @@ export function mapGetHandleData(result: HandleOutput, handle: string): ProfileP
     theme: theme ? (theme as unknown as Theme) : null,
     blocks: [...blocksRaw].sort((a, b) => a.order - b.order) as unknown as BlockType[],
     hasCreatorPool,
+    indexable,
   };
 }
