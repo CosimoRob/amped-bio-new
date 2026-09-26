@@ -2,10 +2,11 @@
 
 Status: spec for review. Build Board item #20.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
+Business overview: [docs/overviews/content-system.md](../overviews/content-system.md)
 
 Rob: "we'll need a content system where people can upload various forms of content."
 
-This is the base layer for paid content (#18), stake-gated content (#19) and broadcast attachments. Creator payments are on hold. Version 1 ships free and stake-gated content. Paid unlock plugs in later through the access gating engine with no change to this system.
+This is the base layer for paid content (#18), stake-gated content (#19) and broadcast attachments. Creator payments are on hold. Version 1 ships free and members-only content. Paid unlock plugs in later through the access gating engine with no change to this system.
 
 ## 1. Research
 
@@ -25,7 +26,7 @@ This is the base layer for paid content (#18), stake-gated content (#19) and bro
 1. **Uploads are not size or type checked after the fact.** The presigned PUT signs `Content-Type` but not length. `confirm*` calls `fileExists` (HeadObject) and marks the file `COMPLETED` without comparing the stored size or the file's real type to what was declared. A user can place any bytes of any size in the public bucket under an allowed extension. Fix: compare `ContentLength` on confirm, and use presigned POST with `content-length-range` for new flows.
 2. **SVG avatars on a public bucket.** SVG can carry script. The public bucket serves it from an AWS domain, so it does not run on amped.bio, but the bucket can host active content. Content uploads in this spec do not accept SVG.
 3. **No account deletion flow.** There is no server path that deletes a user and their stored files. GDPR erasure for content (section 3.10) depends on one.
-4. **Email exposure.** `handle.getHandle` returns the creator's email publicly. Content pages load creator data through the same path. This must be fixed before content pages ship. Tracked separately.
+4. **Email exposure (D1).** `handle.getHandle` returns the creator's email publicly. Content pages load creator data through the same path. The D1 fix must ship before content pages launch (3.13). Tracked separately.
 
 ### 1.3 Best in breed
 
@@ -84,7 +85,7 @@ Creators upload video, audio, images, documents and files once, then place them 
 
 ### Outcomes
 
-- **Creator.** Uploads a 1 GB video from a phone on a weak connection and sees it ready to publish within minutes. Chooses public or gated per item. Sees storage used at a glance.
+- **Creator.** Uploads a 1 GB video from a phone on a weak connection and sees it ready to publish within minutes. Chooses Public or Members only per item. Sees storage used at a glance.
 - **Fan.** Plays public content on the bio with no login. Sees what a locked item is and exactly what unlocks it.
 - **Amped.** No content is served before malware and CSAM checks pass. Every served byte of gated content is authorized by the gating engine. Storage cost scales with use and is capped per creator.
 
@@ -95,7 +96,7 @@ Creators upload video, audio, images, documents and files once, then place them 
 3. Private bucket, CDN with signed URLs, and a video provider with signed playback.
 4. Processing pipeline: multipart upload, type check, malware scan, CSAM hash match, image normalization, transcoding, thumbnails and previews.
 5. `content` block type for bios, and a standalone content page on the public site.
-6. Visibility: public or gated. A gated item points at one named `AccessRule` from the gating engine. v1 creates `stake_min` and `pool_member` rules, the engine's `LIVE_ACCESS_RULE_KINDS`. `reward_points`, `follower` and `paid` switch on when the engine enables them.
+6. Visibility: Public or Members only. A members-only (gated) item points at one named `AccessRule` from the gating engine. v1 creates `stake_min` and `pool_member` rules, the engine's `LIVE_ACCESS_RULE_KINDS`. `reward_points`, `follower` and `paid` switch on when the engine enables them.
 7. Storage and video minute quotas with a storage meter.
 8. Report button, review queue, DMCA workflow and repeat infringer tracking.
 9. Content retention and deletion, including on account delete.
@@ -117,7 +118,7 @@ Creators upload video, audio, images, documents and files once, then place them 
 3. **Adult content policy.** Recommended: no sexually explicit content in v1. Reasons: app store rules, card network rules for adult merchants once payments return, and US state age verification laws that the Supreme Court upheld in 2025 (Free Speech Coalition v. Paxton). Images and video thumbnails run through a classifier. Likely explicit items are held for human review. The alternative is to allow adult content behind age verification. That is a separate project.
 4. **CSAM detection vendor.** Recommended: apply for Microsoft PhotoDNA Cloud Service now. It is free for vetted organizations, but vetting takes time. Thorn Safer is the paid alternative and adds video hashing and a direct NCMEC reporting integration. The Cloudflare CSAM Scanning Tool is not sufficient on its own. It only scans content cached through Cloudflare, which private signed content is not. Launch is blocked until one of these is live.
 5. **Default quotas.** Recommended: 5 GB storage and 300 video minutes per creator. 2 GB per video file, 500 MB per audio or ZIP file, 100 MB per document, 25 MB per image. All values are environment configurable, the same pattern as today's `UPLOAD_LIMIT_*` variables.
-6. **Stake gated content review.** Gating content on a token stake ties a benefit to holding a crypto asset. This must be reviewed by securities counsel before Phase 2 ships. The spec keeps all copy access focused: staking unlocks membership benefits, never returns.
+6. **Members-only content review.** Gating content on a token stake ties a benefit to holding a crypto asset. Securities counsel must review it before Phase 2 ships or is marketed. The spec keeps all copy access focused: staking unlocks membership benefits, never returns.
 
 ## 3. Detailed spec
 
@@ -128,8 +129,8 @@ Creators upload video, audio, images, documents and files once, then place them 
 ![Content library](img/content-system-library.png)
 
 - New sidebar entry "Content" in `apps/client` between Blocks and My Pool.
-- Grid of items with kind badge, lock badge when gated, title, duration or page count, one stat (views, plays or opens) and a status pill: Public, Gated rule summary, Processing, Draft, In review.
-- Filters by kind, gated and drafts. Search by title.
+- Grid of items with kind badge, lock badge when gated, title, duration or page count, one stat (views, plays or opens) and a status pill: Public, Members only with the rule summary, Processing, Draft, In review.
+- Filters by kind, members only and drafts. Search by title.
 - Storage meter shows bytes used against quota by kind, and video minutes against quota.
 - Review queue card appears only when an item is held or blocked.
 
@@ -148,10 +149,10 @@ Creators upload video, audio, images, documents and files once, then place them 
 ![Item editor](img/content-system-editor.png)
 
 - Title (required, 140 characters), description (2,000 characters), cover image, allow download toggle.
-- Visibility: Public or Gated. Gated opens the rule picker. The picker is a component owned by the gating engine spec. It lists the creator's named rules with usage counts and a "New rule" action. Kinds the engine has not enabled show as "Later."
+- Visibility: Public or Members only. Members only opens the rule picker. The picker is a component owned by the gating engine spec. It lists the creator's named rules with usage counts and a "New rule" action. Kinds the engine has not enabled show as "Later."
 - One rule per item, per the engine contract. The engine reserves `any` and `all` composite rules for its v2.
 - Preview for locked fans: first 30 seconds for audio and video (range 0 to 60), first page for documents, blurred cover for images and files.
-- A compliance notice appears when a stake rule is selected. Its wording is fixed and reviewed by counsel.
+- A compliance notice appears when a stake rule is selected. It shows `CONTENT_LOCKED_DISCLOSURE` and `ACCESS_STAKE_DISCLOSURE` (3.9). The wording is fixed and reviewed by counsel.
 - Publish is disabled until the item status is Ready.
 
 #### Bio content block (fan, mobile)
@@ -159,7 +160,7 @@ Creators upload video, audio, images, documents and files once, then place them 
 ![Bio content block](img/content-system-fan-mobile.png)
 
 - Layouts: featured (one large item), grid (2 columns), list.
-- Public items play inline. Gated items show a blurred thumbnail and the rule label.
+- Public items play inline. Members-only items show a blurred thumbnail and the rule label.
 - Every item and the bio footer have "Report content."
 
 #### Locked preview (fan, mobile)
@@ -169,8 +170,9 @@ Creators upload video, audio, images, documents and files once, then place them 
 - Standalone content page at `amped.bio/@{handle}/c/{publicId}`.
 - Blurred cover, the preview player, the title and description.
 - The unlock box shows the rule `summary` and the fan's current status, from the engine's `AccessDecision.unlockHint`.
-- The primary action goes to the pool stake flow. After staking, the page re-checks access and opens the item without a reload.
-- Fixed disclosure under the actions. Staking is not a purchase and carries no promise of return.
+- The primary action goes to the pool page. It never starts a stake transaction in one tap, per the gating engine placement rule. After the fan stakes and returns, the page re-checks access and opens the item without a reload.
+- Fixed disclosure under the actions: `CONTENT_LOCKED_DISCLOSURE` and `ACCESS_STAKE_DISCLOSURE` (3.9).
+- No APY, yield or pool performance figures on the locked page.
 
 ### 3.2 Shared constants (`packages/constants/src/content.ts`)
 
@@ -351,6 +353,8 @@ model CopyrightNotice {
   claimant_contact  String    @db.Text // encrypted at rest, admin only
   work_described    String    @db.Text
   sworn_statement   Boolean
+  valid             Boolean? // null until an admin reviews the notice
+  validated_at      DateTime?
   signature         String    @db.VarChar(255)
   received_at       DateTime  @default(now())
   actioned_at       DateTime?
@@ -377,6 +381,7 @@ model BlockedContentHash {
 - The engine resource id is `ContentItem.id`, for example `content:812`. Public URLs and storage keys use `public_id`.
 - The content system registers a resolver: `registerAccessResourceResolver("content", { getGate })`, which returns `{ ownerUserId, accessRuleId }` for an item.
 - CSAM matches are not stored in these tables. They go to a restricted evidence store (3.9).
+- `CopyrightNotice.valid` is null until an admin reviews the notice. The DMCA KPI (3.11) counts only valid notices.
 - After changing the schema, run `pnpm run --filter server run prisma:generate`.
 
 ### 3.4 Storage layout
@@ -430,7 +435,7 @@ client                    server (tRPC)                  S3 / queue / worker    
       - Documents: render page 1 to 3 previews, remove document metadata, keep the original in `originals/`.
       - Video and audio: create a Mux asset from a 1 hour presigned GET of the original with `playback_policy: ["signed"]` and basic quality. Transcoding strips container metadata.
    5. **Previews.** A 32 px blurred cover for locked cards. Audio waveform JSON. Poster frame for video from Mux.
-   6. **Moderation classifier** (if Decision 3 is accepted). Images and 5 video thumbnails go to Rekognition `DetectModerationLabels`. Explicit nudity above 80% confidence sets `moderation_state = HELD`. Held items cannot be published until a reviewer clears them.
+   6. **Moderation classifier** (v1 default, per Decision 3). Images and 5 video thumbnails go to Rekognition `DetectModerationLabels`. Explicit nudity above 80% confidence sets `moderation_state = HELD`. Held items cannot be published until a reviewer clears them.
    7. Set READY. Move reserved bytes to used. Add video minutes. Send an in app notice.
 5. **Failure handling.** Any step error retries 3 times with backoff, then sets FAILED with a creator safe reason. Items in UPLOADING for 24 hours or PROCESSING for 2 hours are failed by a sweep job and their reserved bytes released.
 6. **Mux webhook** `POST /webhooks/mux` on the Express app. Verifies the `mux-signature` header. Handles `video.asset.ready` and `video.asset.errored`.
@@ -453,10 +458,10 @@ client                    server (tRPC)                  S3 / queue / worker    
 
 - **Access check.** Follows the engine contract (3.1.4). The client calls `access.check({ resource: { type: "content", id } })` to render the locked or open state. To open, it calls `access.issueGrant`, then `content.getReadUrl({ contentItemId, grant })`. `getReadUrl` calls `verifyAccessGrant` and signs URLs whose expiry is `min(TTL in the table, grant exp minus now)`. Public items need no grant. Locked viewers get only the blur preview and the preview clip from `content.getPreview`.
 - **Downloads** are single use. `getReadUrl` records the grant `jti` in Redis with `SET NX EX 600` for download requests.
-- **Contract note.** The engine text says `getReadUrl` presigns an S3 `GetObject`. This spec signs CloudFront URLs over the same private bucket with the same expiry bound, and Mux tokens for streams. The gating engine owner should accept this wording change.
+- **Contract note.** This spec signs CloudFront URLs over the private bucket with the engine's 5 minute ceiling, and Mux tokens for streams. The gating engine spec 3.1.4 records this.
 - **Preview clips.** Mux supports clipping by `asset_start_time` and `asset_end_time` in the playback token for signed assets. The preview token carries `0` and `preview_config.seconds`, so a locked fan cannot request the full stream.
 - **Revocation.** When a fan unstakes, access ends at the next URL refresh. Files: at most 5 minutes. The client refreshes the grant and URLs 60 seconds before expiry.
-- **Stream exception.** Mux checks the token on every segment and cuts playback when it expires. A stream token therefore lives for the item duration plus 10 minutes, capped at 4 hours, even though the grant lives 10 minutes. A fan who unstakes mid video finishes that play session and is blocked on the next one. This exception needs the gating engine owner's sign off.
+- **Stream exception.** Mux checks the token on every segment and cuts playback when it expires. A stream token therefore lives for the item duration plus 10 minutes, capped at 4 hours, even though the grant lives 10 minutes. A fan who unstakes mid video finishes that play session and is blocked on the next one. The gating engine spec accepts this exception (3.1.4 and 3.6).
 - **SSR rule.** The Next.js bio and content pages render gated items in the locked state with blur previews only. Full URLs for gated items are fetched by the browser after hydration. They never appear in server HTML or in page caches.
 - **Broadcast attachments.** A broadcast references items by `ContentItem.id`. `getReadUrl` accepts a grant for `{ type: "broadcast", id }` in place of a content grant. The server confirms the item is attached to that broadcast before signing. Email and push never carry media URLs, only a link back to Amped.
 
@@ -509,6 +514,7 @@ export const contentConfigSchema = z.object({
 
 - Public outputs select explicit fields. They include handle, display name and avatar. They never include email or numeric user ids.
 - `getReadUrl`, `getPreview` and `report` are rate limited per IP and per user with Redis, at the engine's 30 per minute.
+- `getReadUrl` refuses to sign any URL or token unless the item is READY, `moderation_state` is CLEAR and every served asset has `scan_status` CLEAN or SKIPPED. SKIPPED applies only to assets that are re-encoded or transcoded and never served as the original bytes.
 - The router registers in `apps/server/src/trpc/router.ts`.
 
 ### 3.9 Security and compliance
@@ -535,7 +541,22 @@ export const contentConfigSchema = z.object({
 - The Mux signing key and CloudFront private key live in Secrets Manager, not in env files.
 - Logs never include full signed URLs.
 
-**Securities.** Stake gated access is flagged for securities counsel before Phase 2. Fixed copy in the editor notice and the locked page states that staking unlocks membership benefits, is not a purchase of content, and carries no promise of return. Creator facing copy never describes a stake as an investment.
+**Copy and marketing guardrails.** One list covers product copy (library, upload flow, item editor, content block, content page) and content marketing. It matches the business overview's "Compliance guardrails for marketing".
+
+- **Securities.** Members-only content is tied to staking, which is under securities counsel review. Never promise returns, yield, earnings or price movement. Members-only content cannot be marketed until counsel signs off. Creator facing copy never describes a stake as an investment.
+- **Banned words** in content marketing and item copy: earn, yield, returns, profit, invest, investment, passive income, income on autopilot, price, gains. The list lives in `packages/constants/src/compliance.ts` as `CONTENT_BANNED_TERMS`. Locked states sit next to a gate, so they also follow the gating engine list `ACCESS_BANNED_TERMS`.
+- **Approved alternatives:** members only, membership, access, join, support, library, drop, "for my members".
+- **Required disclosure.** The locked page states that staking unlocks membership benefits, is not a purchase of content and carries no promise of return. Fixed text, the constant `CONTENT_LOCKED_DISCLOSURE`: "Staking unlocks membership benefits. It is not a purchase of content and carries no promise of return." The engine's `ACCESS_STAKE_DISCLOSURE` shows with it. Keep both in screenshots.
+- **CSAM.** Known-CSAM hash matching is a launch requirement. Matches are reported to NCMEC. Say "every upload is scanned before it goes live". Never claim "100% safe".
+- **DMCA.** Register the designated agent and publish a copyright policy before launch. Do not use phrases like "share anything" that suggest creators can post work they do not own. Three valid strikes in 12 months ends an account.
+- **Adult content.** v1 does not allow sexually explicit content. Do not recruit adult creators or imply it is allowed.
+- **Protection claims.** Say "streams through a protected player". Never claim files "cannot be copied" or use the word DRM.
+- **Privacy.** Location data is stripped from images. Creator emails never appear on content pages, and the D1 fix must ship first.
+- **Deletion.** Say "delete anytime, removed within 30 days". This matches the GDPR commitment in 3.10.
+- **Paid content.** Describe as "later". Do not collect sign-ups that show prices.
+- **FTC.** Creators featured in launch content who received early access or perks must disclose it.
+
+**Automated check.** `scripts/check-compliance-copy.ts` runs in every build and in CI. It scans string literals and JSX text in the content components of `apps/client` and `apps/landingpage`, plus any content marketing copy stored in the repo. It matches `CONTENT_BANNED_TERMS` and the phrases "100% safe", "share anything", "cannot be copied" and "DRM", case insensitive on word boundaries. Locked state components are also checked against `ACCESS_BANNED_TERMS`. Any match, em dash or en dash fails the build. The only exemptions are `CONTENT_LOCKED_DISCLOSURE` and `ACCESS_STAKE_DISCLOSURE`. Content marketing copy kept outside the repo is checked against the same exported lists before publishing.
 
 ### 3.10 Retention and deletion
 
@@ -547,24 +568,42 @@ export const contentConfigSchema = z.object({
 
 ### 3.11 Analytics events
 
-Events follow the event schema from Build Board #11. Properties never include email. Viewer identity is a hashed id.
+Events follow the event schema from Build Board #11. Properties never include email. Viewer identity is a hashed id. Creator events carry `creator_id_hash`. `upload_id` and `item_id` are the item's `public_id`.
 
 | Event | Properties |
 |---|---|
-| `content_upload_started` | kind, size_bucket |
-| `content_upload_completed` | kind, duration_ms, resumed |
+| `content_upload_started` | kind, size_bucket, upload_id, creator_id_hash |
+| `content_upload_completed` | kind, duration_ms, resumed, upload_id, creator_id_hash |
+| `content_upload_failed` | kind, upload_id, reason_code (size_mismatch, type_mismatch, sweep_timeout) |
+| `content_upload_aborted` | kind, upload_id, by (user, sweep) |
 | `content_processing_failed` | kind, step, reason_code |
+| `content_ready` | kind, item_id, size_mb, seconds_to_ready (from `completeUpload` to READY) |
 | `content_blocked` | kind, reason_code (malware, policy; CSAM is logged only in the restricted system) |
-| `content_published` | kind, gated, rule_kind |
+| `content_unsafe_served` | kind, item_id, reason_code (malware, adult, policy). Emitted when an item that ever had a URL issued for a non preview asset is later set BLOCKED |
+| `content_published` | kind, gated, rule_kind, item_id, creator_id_hash |
 | `content_viewed` | kind, gated, surface (bio, page, broadcast) |
-| `content_url_issued` | kind, asset_role, ttl_seconds (engine server event) |
-| `content_locked_impression` | kind, rule_kind |
+| `content_url_issued` | kind, item_id, asset_role, ttl_seconds (engine server event) |
+| `content_locked_impression` | kind, rule_kind. The server also writes the engine `locked_view` event for resource type `content` |
 | `content_unlock_clicked` | rule_kind |
 | `content_unlocked` | rule_kind, seconds_since_impression |
 | `content_downloaded` | kind |
 | `content_reported` | reason |
+| `dmca_notice_received` | notice_id |
+| `dmca_notice_actioned` | notice_id, valid, within_one_business_day |
+| `content_adoption_snapshot` | creators, uploading_creators_month, uploading_creators_all_time, published_items_all_time (daily job) |
 
 Creator stats shown in the library (views, plays, opens) come from `content_viewed` counts per item.
+
+**KPI to event.** Each 90-day target in the business overview maps to one measurement.
+
+| KPI (90-day target, proposed) | Measurement |
+|---|---|
+| Active creators who upload in a month (30%) | `uploading_creators_month` divided by `creators` from the latest `content_adoption_snapshot`. `uploading_creators_month` counts creators with a `content_upload_completed` in the trailing 30 days. `creators` counts all creators with a bio, the same base as the cost model (1.5) |
+| Published items per uploading creator (5) | `published_items_all_time` divided by `uploading_creators_all_time` from the latest snapshot |
+| Upload success rate (98%) | Distinct `upload_id` on `content_upload_completed` divided by distinct `upload_id` on `content_upload_started`, excluding uploads with `content_upload_aborted` where `by = user` |
+| Time to Ready for a 1 GB video (under 5 minutes) | p95 of `seconds_to_ready` on `content_ready` for kind video with `size_mb` from 750 to 1,250. Target is under 300 |
+| Valid DMCA notices actioned within 1 business day (100%) | `dmca_notice_actioned` with `valid = true` and `within_one_business_day = true`, divided by all valid notices. A daily check also counts valid notices still open past 1 business day as misses |
+| Unsafe files served to any viewer (0) | Count of `content_unsafe_served`, plus the count of CSAM items with any issued URL from the restricted system. The `getReadUrl` guard in 3.8 makes a nonzero value a defect |
 
 ### 3.12 Acceptance criteria
 
@@ -583,31 +622,44 @@ Creator stats shown in the library (views, plays, opens) come from `content_view
 13. No content procedure returns an email address or numeric user id.
 14. `pnpm run typecheck` and `pnpm run build` pass.
 15. No part of the upload path sends file bytes through the Vercel function.
+16. On the locked page the primary action opens the pool page and never starts a stake transaction. `CONTENT_LOCKED_DISCLOSURE` and `ACCESS_STAKE_DISCLOSURE` show under the actions. No APY, yield or pool performance figure appears on the page.
+17. `scripts/check-compliance-copy.ts` finds no term from `CONTENT_BANNED_TERMS`, no banned phrase and no em or en dash on content surfaces. Locked states also pass `ACCESS_BANNED_TERMS`. Any match fails the build.
+18. `handle.getHandle` and every content page return no creator email (D1 fix) before Phase 1 launches.
+19. `getReadUrl` refuses items that are not READY, not moderation CLEAR, or have an asset whose scan is not CLEAN or an allowed SKIPPED.
+20. A valid DMCA notice recorded in the admin tool disables the item, notifies the creator and writes `dmca_notice_actioned` with `within_one_business_day`.
+21. An image the classifier flags as explicit is HELD and cannot be published until a reviewer clears it.
+22. On staging, every event in 3.11 fires, and each KPI in the KPI to event table computes from those events.
 
 ### 3.13 Phased rollout
 
-**Phase 0. Prerequisites (1 week, parallel).**
+Timings follow the business overview launch plan. All dates are proposed.
+
+**Phase 0. Prerequisites (October to November 2026, proposed).** Engineering work takes about 1 week. Vendor vetting and legal work run in parallel through the period.
 - Replace SDK v2 `getSignedUrlPromise` in `S3Service.getSignedUrl` with `@aws-sdk/s3-request-presigner`, and remove `aws-sdk` from `apps/server/package.json`.
 - Add the size check to existing `confirm*` procedures (finding 1).
-- Fix the email exposure in `handle.getHandle`.
+- Fix the creator email exposure (D1) in `handle.getHandle`.
 - Create the private bucket, CloudFront distribution, user content domain, key group and Secrets Manager entries.
-- Register the DMCA agent. Apply for PhotoDNA. Draft the Content Policy and ToS updates with counsel.
+- Register the DMCA agent. Apply for PhotoDNA now, since vetting takes time. Prepare the Content Policy and ToS updates with counsel.
 - Sign the Mux account and create the signing key.
+- Recruit 25 pilot creators.
 
-**Phase 1. Free content (3 to 4 weeks).**
+**Phase 1. Free content (December 2026, once CSAM matching is live, proposed; 3 to 4 weeks of build).**
 - Schema, constants, `content` router, worker and webhooks.
 - Library, upload flow and item editor with Public visibility only.
 - Content block and content page on the landingpage.
-- Malware, CSAM and classifier checks live. Report flow and admin queue.
-- Launch gate: CSAM matching live, DMCA agent registered, Content Policy published.
+- Malware, CSAM and classifier checks live. Report flow, admin queue and DMCA admin tools.
+- Analytics events from 3.11 and the compliance copy check, so 90-day KPIs start at launch.
+- The 25 pilot creators onboard first.
+- Launch gate: CSAM matching live, DMCA agent registered, copyright policy, Content Policy and Terms updates published, D1 fix live.
 
-**Phase 2. Stake gated content (2 weeks after the gating engine ships).**
+**Phase 2. Members-only content (first quarter 2027, proposed).**
+- Starts no earlier than 2 weeks after the gating engine ships (engine Phase 1). Ships with engine Phase 2, which adds `issueGrant` for content.
 - Rule picker in the editor, locked cards and locked preview page.
 - `access.issueGrant` and `content.getReadUrl` wired with `verifyAccessGrant`. Resolver registered for `"content"`.
 - Broadcast attachments.
-- Launch gate: securities counsel sign off on gating copy and mechanics.
+- Launch gate: securities counsel sign off on gating copy and mechanics. Members-only content is not marketed before that sign off.
 
-**Phase 3. Later.**
+**Phase 3. Later, no date.**
 - Paid unlock through the `paid` rule when payments resume.
 - Collections, PDF stamping, visible viewer watermark on video.
 - Move avatars and backgrounds behind CloudFront and close the public bucket.
@@ -634,3 +686,7 @@ Creator stats shown in the library (views, plays, opens) come from `content_view
 - Microsoft PhotoDNA Cloud Service: https://www.microsoft.com/en-us/photodna/cloudservice
 - Thorn Safer: https://safer.io/how-it-works/
 - US Copyright Office DMCA Directory FAQ: https://www.copyright.gov/dmca-directory/faq.html
+
+## Revision log
+
+2026-09-26: aligned with business overview (added overview link; "gated" visibility renamed Members only in product copy and phase names; D1 named and made a Phase 1 launch gate; locked page action changed from a one-tap stake flow to the pool page, matching the gating engine; locked page disclosure fixed as a constant shown with the engine disclosure; adult content classifier made the v1 default; stream exception and CloudFront wording marked as accepted by the gating engine spec; `getReadUrl` safety guard added; `CopyrightNotice.valid` added; banned words, approved alternatives, disclosure and CSAM, DMCA, adult, protection, privacy, deletion, paid and FTC rules matched to the overview as one product plus marketing list; build-time copy check added; upload id, ready time, unsafe served, DMCA and adoption snapshot events plus a KPI to event table added; phases given proposed timings, 25 pilot creators, the D1 and CSAM gates and the gating before members-only content dependency; acceptance criteria 16 to 22 added).

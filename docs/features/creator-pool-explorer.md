@@ -2,6 +2,7 @@
 
 Status: spec for review. Build Board item #9.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
+Business overview: [docs/overviews/creator-pool-explorer.md](../overviews/creator-pool-explorer.md)
 
 Rob's brief: "a standalone Creator Pool Explorer outside Amped.Bio, and also inside Amped.Bio. We need both."
 
@@ -85,7 +86,7 @@ Most of the explorer already exists. This document is a gap analysis plus the ta
 
 **Adopt**
 
-1. Table-first list with sortable columns and a grid toggle. Default sort is total staked, then stakers.
+1. Table-first list with sortable columns and a grid toggle. Default sort is stakers, then total staked.
 2. Stakers (community size) and staker growth are the headline metrics. Money is shown as a fact, never ranked as an opportunity.
 3. A "data as of block N" stamp on every page, and a Revoscan link on every figure that comes from chain.
 4. A Pools, Creators, Activity tab structure, with a network selector ready for mainnet.
@@ -333,7 +334,7 @@ Notes:
 
 ### 3.4 Ranking and completeness
 
-- Default sort: `totalStakeWei` descending, tie-break by `stakerCount`, then `completeness`.
+- Default sort: `stakerCount` descending, tie-break by `totalStakeWei`, then `completeness`. Pools are ranked by community size first. Total staked stays available as a user-selected sort.
 - "Rising" sort: `stakerChange30d` descending, among pools with at least 10 stakers. Stake flows alone do not drive it.
 - `completeness` (0 to 100): pool image 25, description of 40 or more characters 25, creator handle and avatar 25, at least one perk rule 25. Published in the explorer's "How ranking works" page.
 - Listing floor per Decision 4. Admin `hidden` and creator `listed = false` both remove a pool from lists.
@@ -344,7 +345,7 @@ New router `apps/server/src/trpc/pools/explorer.ts`, mounted as `pools.explorer`
 
 | Procedure | Access | Input (zod) | Output |
 |---|---|---|---|
-| `list` | public | `{ chainId: string, q?: string (max 80), category?: PoolCategory, minStakers?: number, maxTakeRateBps?: number, sort: "total_staked" \| "stakers" \| "rising" \| "newest" \| "name", cursor?: string, limit: number (1 to 50, default 25) }` | `{ items: ExplorerPoolRow[], nextCursor: string \| null, total: number, asOfBlock: string, refreshedAt: string }` |
+| `list` | public | `{ chainId: string, q?: string (max 80), category?: PoolCategory, minStakers?: number, maxTakeRateBps?: number, sort: "total_staked" \| "stakers" \| "rising" \| "newest" \| "name" (default "stakers"), cursor?: string, limit: number (1 to 50, default 25) }` | `{ items: ExplorerPoolRow[], nextCursor: string \| null, total: number, asOfBlock: string, refreshedAt: string }` |
 | `get` | public | `{ chainId: string, address: string (0x, 40 hex, lowercased) }` | `ExplorerPoolDetail` or `NOT_FOUND`. Hidden pools return `NOT_FOUND`. Unlisted pools return data with `listed: false`. |
 | `history` | public | `{ chainId, address, range: "7d" \| "30d" \| "90d" \| "all" }` | `{ points: { day: string, totalStakeWei: string, stakerCount: number }[] }` |
 | `activity` | public | `{ chainId, address?: string, kind?: PoolEventKind, cursor?: string, limit: 1 to 50 }` | `{ items: { kind, wallet, handle: string \| null, amountWei, txHash, blockTime }[], nextCursor }`. `handle` only when the wallet's user has `showStakesPublicly`. |
@@ -384,17 +385,26 @@ Existing procedures:
 
 ### 3.7 Compliance and copy
 
-Rules for every pool surface, public and in-app:
+Rules for every pool surface, public and in-app, and for all explorer marketing. One list covers product and marketing.
 
-1. No "earn", "earnings", "yield", "returns", "passive income", "APY" or "APR" in UI copy.
-2. Describe mechanics, not outcomes: "stake", "unstake", "claim", "rewards the network distributes to the pool", "take rate".
-3. No ranking, sorting or highlighting by rewards.
-4. Every page with pool numbers carries the disclaimer below and a block height.
-5. No price charts and no language about a stake gaining value.
+1. **Banned words.** Never use: earn, earning, earnings, yield, returns, passive income, APY, APR, profit, invest, investment, gains, moon, key price. The list lives in `packages/constants/src/compliance.ts` as `EXPLORER_BANNED_TERMS`.
+2. **Approved alternatives.** Describe mechanics, not outcomes: stake, unstake, claim, back, support, join, members, community, take rate, "rewards the network distributes to the pool". UI labels say "Stakers" per Decision 6. Marketing copy may say "members".
+3. **Securities.** REVO staking is under securities counsel review. Never promise returns, yield, earnings or price movement. Describe staking as backing a creator and joining their membership.
+4. **APR stays hidden.** No reward rate, APR or APY on any surface until securities counsel signs off. The reward rate card reads "Not shown while under compliance review". The approved label per Decision 2 applies only after sign-off.
+5. **No ranking by money.** Never sort, rank or highlight pools by rewards paid or reward rate. Rising uses staker growth only.
+6. **No price charts.** The only chart is total staked and staker count over time. No language about a stake gaining value.
+7. **Perks.** Show perks as member access to creator content only, never as an economic benefit.
+8. **Disclaimer and block height.** Every explorer page carries the disclaimer below and a block height. Marketing screenshots keep the disclaimer visible.
+9. **Regulatory references.** The SEC's May 2025 staking statement is background for counsel only. Never cite it in UI or marketing as clearance.
+10. **Privacy in marketing.** Screenshots and demos use sample data and test accounts only.
 
-Disclaimer (footer of every explorer page):
+Disclaimer (footer of every explorer page, and in screenshots). Stored as `EXPLORER_DISCLAIMER` in `packages/constants/src/compliance.ts`:
 
-> Amped.Bio shows on-chain pool data for information only. It is not investment advice or an offer of any financial product. Staking locks REVO in a smart contract. Rewards the network distributes to a pool are variable and not guaranteed. Data refreshes every 5 minutes. Check any figure on Revoscan.
+> Amped.Bio shows on-chain pool data for information only. It is not investment advice or an offer of any financial product. Staking locks REVO in a smart contract. Rewards the network distributes to a pool are variable and not guaranteed.
+
+The footer shows the last update time and block height next to the disclaimer. Revoscan links sit on each figure, not in the disclaimer.
+
+**Automated check.** A script, `scripts/check-compliance-copy.ts`, runs in every build and in CI. It scans string literals and JSX text in the pool component folders of `apps/client`, `apps/landingpage` and `packages/ui/src/explorer`, plus any explorer marketing copy stored in the repo. It matches `EXPLORER_BANNED_TERMS` case insensitive on word boundaries. Any match fails the build. The only exemption is the `EXPLORER_DISCLAIMER` constant, which contains "investment" by design. Explorer marketing copy kept outside the repo is checked against the same exported list before publishing.
 
 Replacements:
 
@@ -453,20 +463,36 @@ Sent through the analytics layer defined in Build Board item #11. Property `surf
 
 | Event | Properties |
 |---|---|
-| `explorer_viewed` | `tab`, `chainId` |
+| `explorer_viewed` | `tab`, `chainId`, `trafficSource` (`organic_search`, `social`, `referral`, `direct`, `internal`), `isLanding` |
 | `explorer_searched` | `query_length`, `results` |
 | `explorer_filter_changed` | `category`, `sort`, `minStakers`, `maxTakeRateBps` |
 | `explorer_pool_opened` | `poolAddress`, `rank`, `sort` |
-| `pool_detail_viewed` | `poolAddress`, `listed` |
-| `pool_stake_clicked` | `poolAddress`, `loggedIn` |
-| `pool_stake_confirmed` | `poolAddress`, `amountBucket` (bucketed, never exact) |
+| `pool_detail_viewed` | `poolAddress`, `listed`, `trafficSource`, `isLanding` |
+| `pool_stake_clicked` | `poolAddress`, `loggedIn`, `stakeFlowId` |
+| `pool_stake_login_returned` | `poolAddress`, `stakeFlowId` |
+| `pool_stake_confirmed` | `poolAddress`, `amountBucket` (bucketed, never exact), `stakeFlowId` |
 | `pool_unstake_confirmed` | `poolAddress` |
 | `pool_watch_toggled` | `poolAddress`, `watched` |
 | `pool_shared` | `poolAddress`, `channel` |
 | `pool_revoscan_clicked` | `poolAddress`, `target` (`pool`, `tx`) |
 | `pool_perk_clicked` | `poolAddress`, `ruleKind` |
+| `explorer_listing_snapshot` (server, daily at 00:00 UTC) | `chainId`, `poolsWithHandle`, `poolsMeetingFloor` |
+| `indexer_lag_sampled` (server, every poll) | `chainId`, `lagSeconds` (latest chain block time minus `IndexerCursor.lastBlock` block time) |
+
+`trafficSource` is derived from the referrer and UTM parameters on the first page of a session. `isLanding` is true on that first page. `stakeFlowId` is a client-generated id created on the Stake click. It survives the login redirect in the return URL, so a logged-out click and its later confirmation link up.
 
 Funnel to watch: `pool_detail_viewed` to `pool_stake_clicked` to `pool_stake_confirmed`, split by surface.
+
+**KPI to event.** Each 90-day target in the business overview maps to one measurement.
+
+| KPI (90-day target, proposed) | Measurement |
+|---|---|
+| Pool page views that lead to a Stake click (5%) | Sessions with `pool_stake_clicked` divided by sessions with `pool_detail_viewed`, per pool page |
+| Stake clicks that complete (40%) | Distinct `stakeFlowId` on `pool_stake_confirmed` divided by distinct `stakeFlowId` on `pool_stake_clicked` |
+| Pools meeting the listing floor (60% of pools with a creator handle) | `poolsMeetingFloor` divided by `poolsWithHandle` from `explorer_listing_snapshot` |
+| Organic search sessions to explorer pages (1,000 per month) | Count of `explorer_viewed` or `pool_detail_viewed` with `isLanding = true` and `trafficSource = organic_search`, `surface = public` |
+| Indexer lag under 2 minutes, 99% of the time | Share of `indexer_lag_sampled` with `lagSeconds < 120` over the window |
+| Banned words on pool surfaces (0) | Match count from `scripts/check-compliance-copy.ts` (3.7). Every build must report 0. |
 
 ### 3.12 Acceptance criteria
 
@@ -476,7 +502,7 @@ Funnel to watch: `pool_detail_viewed` to `pool_stake_clicked` to `pool_stake_con
 4. The public pool detail page returns full HTML with pool name, stats and activity when fetched with JavaScript disabled.
 5. `/i/pools` and `/i/pools/{address}` return 301 to the new URLs.
 6. The Stake REVO button on the public detail page opens the stake modal for a logged-in user and returns a logged-out user to the same page after login. No path lands on the home page.
-7. No pool surface in either app contains the whole words "earn", "earning", "earnings", "APY", "APR", "yield" or "returns" (checked by a lint rule or test over the pool component folders).
+7. No pool surface in either app contains any term in `EXPLORER_BANNED_TERMS` (3.7). `scripts/check-compliance-copy.ts` runs in every build and fails it on any match. Only `EXPLORER_DISCLAIMER` is exempt.
 8. No public explorer response contains a key named `email`.
 9. A staker's handle appears in activity or top stakers only after they enable "Show my stakes publicly".
 10. `debug` and `debug-apy` pages return 404 to non-admins.
@@ -484,18 +510,24 @@ Funnel to watch: `pool_detail_viewed` to `pool_stake_clicked` to `pool_stake_con
 12. The editor Explore panel offers the same sorts and filters as the public explorer and never navigates away to stake.
 13. The Leaderboard panel no longer shows mock data.
 14. Typecheck and build pass for server, client, landingpage and packages.
-15. The disclaimer and a block height appear on every explorer page.
+15. The disclaimer and a block height appear on every explorer page. The rendered disclaimer matches `EXPLORER_DISCLAIMER` word for word.
+16. No surface shows a reward rate, APR or APY. The reward rate card reads "Not shown while under compliance review".
+17. The default list sort is stakers descending. No sort, rank or highlight uses rewards paid or reward rate.
+18. Every KPI in 3.11 can be computed from events fired in staging: a test session produces `pool_detail_viewed`, `pool_stake_clicked`, `pool_stake_login_returned` and `pool_stake_confirmed` with one shared `stakeFlowId`, and `indexer_lag_sampled` and `explorer_listing_snapshot` appear on schedule.
+19. No analytics event carries an email, a staker wallet address or an exact stake amount.
 
 ### 3.13 Phased rollout
 
-| Phase | Scope | Exit |
-|---|---|---|
-| 0. Hotfix (days) | Copy pass (3.7). Remove APR display and public debug links. Fix the Stake deep link. Remove mock Leaderboard. Add pool name and handle to `getPools` search. `hidden` check in `getPoolByAddress`. | Criteria 6, 7, 10, 13 |
-| 1. Data layer | Migration. Indexer and backfill. `PoolStats`, `PoolSnapshot`. `explorer.list`, `get`, `history`, `activity`, `stats`. | Criteria 1, 2, 3 |
-| 2. Public explorer | `/pools` routes, redirects, server-rendered detail, shared `packages/ui` components, reserved handles, categories, disclaimer. | Criteria 4, 5, 11, 15 |
-| 3. In-app explorer | Explore panel rebuild, "Your stakes", watchlist, in-place detail and stake. `showStakesPublicly` setting. | Criteria 9, 12 |
-| 4. Perks and growth | Perks panel from `AccessRule`. Rising sort. Creators and Activity tabs. Analytics events. Sitemap entries for the SEO spec. | Analytics funnel live |
-| Later | Reward rate display if counsel approves. Mainnet network selector. Revolution-branded host. | Rob's decision |
+Overview launch stages: Pre-launch covers phases 0 and 1. Launch is phase 2. Post-launch covers phases 3 and 4.
+
+| Phase | Timing | Scope | Gates and dependencies | Exit |
+|---|---|---|---|---|
+| 0. Hotfix (days) | October 2026 (proposed) | Copy pass (3.7). Hide APR on every surface. Remove public debug links and move debug pages behind admin login. Fix the Stake deep link. Remove mock Leaderboard. Add pool name and handle to `getPools` search. `hidden` check in `getPoolByAddress`. Ship `scripts/check-compliance-copy.ts` in the build. | None. Ships first. | Criteria 6, 7, 10, 13, 16 |
+| 1. Data layer | October 2026 (proposed) | Migration. Indexer and backfill from the factory deployment block. `PoolStats`, `PoolSnapshot`. `explorer.list`, `get`, `history`, `activity`, `stats`. `indexer_lag_sampled` and `explorer_listing_snapshot`. In-app nudge in My Pool to complete the fields that count toward `completeness`. | Counsel review of the disclaimer, stake modal copy and the "How network rewards reach a pool" article starts here. | Criteria 1, 2, 3 |
+| 2. Public explorer (launch) | December 2026 (proposed) | `/pools` routes, redirects from `/i/pools`, server-rendered detail, shared `packages/ui` components, reserved handles, categories, disclaimer, default sort by stakers. Funnel and traffic analytics events from 3.11, so 90-day KPIs start at launch. | Counsel sign-off on the disclaimer and stake modal copy. The `handle.getHandle` email exposure fix (Broadcast D1) is live, since pool pages link to creator bios. | Criteria 4, 5, 11, 15, 17, 18 |
+| 3. In-app explorer | First quarter 2027 (proposed) | Explore panel rebuild, "Your stakes", watchlist, in-place detail and stake. `showStakesPublicly` setting. | Phase 2 live. | Criteria 9, 12 |
+| 4. Perks and growth | First quarter 2027 (proposed) | Perks panel from `AccessRule`. Rising sort. Creators and Activity tabs. Remaining analytics events. Sitemap entries for the SEO spec. | Access gating engine ships its public rule summary function. SEO spec (item #10) sitemap in place. | All KPI measurements in 3.11 live |
+| Later | Not scheduled | Reward rate display if counsel approves. Mainnet network selector. Revolution-branded host. | Securities counsel sign-off for reward rate. Rob's decision. | Rob's decision |
 
 ## Sources
 
@@ -513,3 +545,7 @@ Funnel to watch: `pool_detail_viewed` to `pool_stake_clicked` to `pool_stake_con
 - Farcaster docs, channels: https://docs.farcaster.xyz/learn/what-is-farcaster/channels
 - Neynar Farcaster channel registry: https://github.com/neynarxyz/farcaster-channels
 - SEC Division of Corporation Finance, Statement on Certain Protocol Staking Activities (May 29, 2025), background for counsel review only: https://www.sec.gov/newsroom/speeches-statements/statement-certain-protocol-staking-activities-052925
+
+## Revision log
+
+2026-09-26: aligned with business overview (added overview link; default sort changed to stakers, total staked kept as an option; banned-word list, approved alternatives and compliance rules matched to the overview as one product plus marketing list; disclaimer text matched exactly and the wrong "refreshes every 5 minutes" line removed; build-time banned-word check added; traffic source, stake flow id, listing floor and indexer lag analytics plus a KPI to event table added; phases given proposed timings and gates for counsel sign-off, the D1 email fix and the gating engine; analytics moved to launch; acceptance criteria 16 to 19 added and 7 and 15 tightened).

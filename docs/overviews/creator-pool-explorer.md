@@ -94,7 +94,7 @@ Social post: "Every creator pool on the REVO network, in one place. Search by na
 
 | Phase | Timing | Actions | Channels |
 |---|---|---|---|
-| Pre-launch | October 2026, hotfix within days (proposed) | Fix the broken Stake link. Remove the fake leaderboard APR and all "earn" copy. Hide APR on every surface. Move debug pages behind admin login. Build the chain indexer and backfill from the factory deployment block. Counsel reviews the disclaimer and stake modal copy. | No public marketing yet. Creator nudges in app to complete profiles. |
+| Pre-launch | October 2026, hotfix within days (proposed) | Fix the creator email exposure (D1). Fix the broken Stake link. Remove the fake leaderboard APR and all "earn" copy. Hide APR on every surface. Move debug pages behind admin login. Build the chain indexer and backfill from the factory deployment block. Counsel reviews the disclaimer and stake modal copy. | No public marketing yet. Creator nudges in app to complete profiles. |
 | Launch | December 2026 (proposed) | Public explorer at amped.bio/pools with redirects from /i/pools. Server-built pool pages, categories, disclaimer and reserved handles. Announce with a walkthrough video. | Amped blog. X. LinkedIn. TikTok and Instagram short video. AI Leader Edge podcast segment on community-first discovery. |
 | Post-launch | First quarter 2027 (proposed) | In-app explorer with "Your stakes" and watchlist. Opt-in public staker identity. Perks panel, Rising view, Creators and Activity tabs. Pool sitemap entries. | Amped blog "Rising creators" roundups. LinkedIn and X threads. Apollo.io outreach to creators with pools that miss the listing floor. |
 
@@ -119,6 +119,7 @@ Social post: "Every creator pool on the REVO network, in one place. Search by na
 - **Regulatory references.** The SEC's May 2025 staking statement is background for counsel only. Never cite it in marketing as clearance.
 - **Privacy.** Staker handles appear only with "Show my stakes publicly" turned on. No explorer response ever contains an email. Screenshots use sample data and test accounts.
 - **Perks.** Show perks as member access to creator content only, never as an economic benefit.
+- **Disclaimer exemption.** The required disclaimer is the only place the words "investment advice" may appear. The automated banned-word check exempts it.
 
 ## Screens, decisions and links
 

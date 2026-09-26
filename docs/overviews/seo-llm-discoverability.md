@@ -25,7 +25,7 @@ SEO and AI discoverability makes every quality Amped bio a distinct page that Go
 
 **For Amped the business**
 
-- Sitemaps list every quality bio, pool and blog post, and new bios appear within an hour.
+- Sitemaps list every quality bio, every public pool and the latest 100 blog posts. New bios appear within an hour.
 - robots.txt welcomes search engines and AI crawlers and keeps login and private pages out.
 - An llms.txt file gives AI agents a short map of the site, as a low-cost hedge.
 - Empty, thin or suspended bios stay out of the index, so they do not dilute the domain.
@@ -36,13 +36,13 @@ SEO and AI discoverability makes every quality Amped bio a distinct page that Go
 1. A search crawler, an AI crawler or a person requests amped.bio/@handle.
 2. Amped builds the page on the server with the creator's title, description, preferred address and share image.
 3. Structured data tells search engines this is a creator profile and links it to the creator's other channels.
-4. A sitemap index points crawlers to every quality bio, pool and blog post.
+4. A sitemap index points crawlers to every quality bio, public pool and the latest 100 blog posts.
 5. robots.txt allows search and AI crawlers and blocks login, signup and private pages.
 6. llms.txt gives AI agents a plain summary of Amped and its key pages.
 7. Bios that miss the quality bar are marked "do not index" and left out of sitemaps.
 8. After deploy, Rob verifies amped.bio in Google Search Console and Bing Webmaster Tools and submits the sitemap.
 
-Under the hood, bios were already built on the server, so crawlers always got full pages. This work adds per-bio titles, share images and structured data on top. A bio qualifies when it has a handle, a verified email, is not suspended and has a description or at least one link. No email or private field ever enters metadata.
+Under the hood, bios were already built on the server, so crawlers always got full pages. This work adds per-bio titles, share images and structured data on top. A bio qualifies when it has a handle, a verified email, is not suspended and has a description or at least one block. No email or private field ever enters metadata.
 
 ## Competition
 

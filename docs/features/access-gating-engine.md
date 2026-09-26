@@ -2,6 +2,7 @@
 
 Status: spec for review. Build Board item #21.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
+Business overview: [docs/overviews/access-gating-engine.md](../overviews/access-gating-engine.md)
 
 One rule engine decides who can open a gated link, content item or broadcast. It powers paid links (#16), reward gated links (#17), paid content (#18), stake gated content (#19) and gated broadcasts. This spec owns the shared contract that the content system, broadcast, pool explorer and brand portal specs depend on. Section 3.1 is that contract.
 
@@ -10,7 +11,7 @@ One rule engine decides who can open a gated link, content item or broadcast. It
 ### 1.1 Current code
 
 - **Blocks.** `Block` in `apps/server/prisma/schema.prisma` has `id`, `user_id`, `type`, `order`, `clicks`, `config Json`. Types are `link`, `media`, `text`, `pool`, `referral` (`packages/constants/src/blocks.ts`). Config is validated per type with zod (`linkConfigSchema` and siblings; server copy in `apps/server/src/routes/blocks-schemas.ts`). There is no gate concept.
-- **Public bio payload.** `handle.getHandle` in `apps/server/src/trpc/handle.ts` is a `publicProcedure`. It returns every block with its full `config`, including `config.url`. It also returns `clicks`.
+- **Public bio payload.** `handle.getHandle` in `apps/server/src/trpc/handle.ts` is a `publicProcedure`. It returns every block with its full `config`, including `config.url`. It also returns `clicks`. It also returns the creator's email. That is the creator email exposure (D1). The D1 fix must ship before gating launches publicly (3.9, 3.11).
 - **Public bio render.** `apps/landingpage/src/app/[handle]/page.tsx` is `force-dynamic` and renders `ProfileView` server side. `ProfileView.tsx` renders link blocks as `<a href={block.config.url}>`. For `custom` links it loads a favicon from `google.com/s2/favicons?domain=...`. That favicon request also reveals the destination domain.
 - **Click tracking.** `blocks.registerClick` (`apps/server/src/trpc/blocks.ts`) increments `Block.clicks` from the browser after the click.
 - **SEO.** The SEO branch (`origin/feature/seo-llm-discoverability`, `apps/landingpage/src/lib/seo.ts`) builds JSON-LD `sameAs` from link blocks. Gated blocks must be excluded there.
@@ -65,7 +66,7 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 3. Kinds live in v1: `stake_min`, `pool_member`.
 4. Kinds defined but not live: `paid` (via `PaymentVerifier`), `reward_points`, `follower`.
 5. Gated link redirect `GET /go/:blockId`. Gated media and text reveal via `access.revealBlock`.
-6. Locked block DTO in `handle.getHandle`. Exclusion from JSON-LD, sitemap and `llms.txt`.
+6. Locked block DTO in `handle.getHandle`. Exclusion from JSON-LD, sitemap, `llms.txt` and share previews (Open Graph and X card tags).
 7. Creator rule builder in the block editor. Access rules page with unlock stats.
 8. Fan unlock sheet on the public bio.
 9. `AccessEvent` log for stats.
@@ -89,7 +90,7 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 5. **Grant lifetime.** Recommended: 10 minutes. Reason: long enough to stream a video or finish a download. Short enough that an unstake ends access quickly.
 6. **Who can unlock.** Recommended: signed in Amped users with a linked wallet. Reason: the wallet is already verified server side through Web3Auth. External wallets via SIWE come later.
 7. **Link destinations after redirect.** Recommended: accept that the fan sees the destination after the 302. Reason: any redirect ends at a real URL. Creators who need stronger control use a content item, which is served from signed S3 URLs. The builder states this plainly.
-8. **Counsel review.** Required before launch of `stake_min` and `pool_member`. See section 3.9.
+8. **Counsel review.** Required before launch or public marketing of `stake_min` and `pool_member`. See section 3.9.
 
 ## 3. Detailed spec
 
@@ -281,7 +282,7 @@ tRPC router `apps/server/src/trpc/access.ts`, mounted as `access`:
 
 | Procedure | Type | Input | Output |
 |---|---|---|---|
-| `access.check` | public | `{ resource }` | `AccessDecision` |
+| `access.check` | public | `{ resource, intent?: "render" \| "open" }` | `AccessDecision`. `intent` defaults to `"render"`. `"open"` uses open freshness and is logged as an attempt (3.8) |
 | `access.checkBio` | public | `{ handle }` | `Record<string, AccessDecision>` for every gated block on that bio |
 | `access.issueGrant` | private | `{ resource }` | `{ grant: string; expiresAt: string }` or `FORBIDDEN` with the decision |
 | `access.revealBlock` | private | `{ blockId }` | the block `config` for `media` and `text` blocks, after an `"open"` check |
@@ -292,10 +293,11 @@ tRPC router `apps/server/src/trpc/access.ts`, mounted as `access`:
 | `access.rules.stats` | private | `{ from, to }` | per rule counts from `AccessEvent` |
 | `access.rules.recentUnlocks` | private | `{ limit }` | handle or truncated wallet, item label, time |
 | `blocks.setAccessRule` | private | `{ blockId, accessRuleId: number \| null }` | updated block |
+| `access.trackPoolVisit` | public | `{ resource }` | none. The pool page calls it when opened with `?ref=gate&rid={type}:{id}`. Logs `pool_visit` (3.8) |
 
 - `rules.create` rejects kinds not in `LIVE_ACCESS_RULE_KINDS`, except `paid` once a real `PaymentVerifier` is registered.
 - `rules.create` and `update` for `stake_min` and `pool_member` check that `poolAddress` is a `CreatorPool` owned by the creator's wallet on `chainId` (Decision 3).
-- Rate limits: `check`, `checkBio`, `issueGrant` and `revealBlock` at 30 per minute per user or IP. `/go` at 60 per minute.
+- Rate limits: `check`, `checkBio`, `issueGrant`, `revealBlock` and `trackPoolVisit` at 30 per minute per user or IP. `/go` at 60 per minute.
 
 #### 3.1.4 Access grant
 
@@ -323,9 +325,9 @@ payload {
 - The client holds the grant in memory only. No cookie, no localStorage.
 - Single use is optional per caller. The content spec can require it for downloads by recording `jti` in Redis with `SET NX EX 600`.
 
-**Content system usage.** `content.getReadUrl({ contentItemId, grant })` calls `verifyAccessGrant`, then presigns an S3 `GetObject` with `expiresIn = min(300, grant exp minus now)`. The S3 URL is returned in the response body. It never appears in SSR HTML.
+**Content system usage.** `content.getReadUrl({ contentItemId, grant })` calls `verifyAccessGrant`, then signs CloudFront URLs over the private content bucket (`content-system.md` 3.6). File URL expiry is `min(300, grant exp minus now)` or lower. The signed URL is returned in the response body. It never appears in SSR HTML.
 
-Alignment with the content system spec (`content-system.md`): files are served through CloudFront, so the content system signs CloudFront URLs rather than S3 `GetObject` URLs. The 5 minute ceiling still applies to file downloads. Video and audio use Mux signed playback tokens. A Mux token must cover the full playback, so its lifetime is the media length plus 10 minutes and may exceed the 10 minute grant. The grant still gates issuance: no token is minted without a valid grant.
+The 5 minute ceiling applies to every file URL issued under a grant. Blur previews and public item URLs follow the content spec TTL table. Video and audio use Mux signed playback tokens. A Mux token must cover the full playback, so its lifetime is the media length plus 10 minutes, capped at 4 hours, and may exceed the 10 minute grant. This stream exception is accepted by this spec (see 3.6). The grant still gates issuance: no token is minted without a valid grant.
 
 **Broadcast usage.** Opening a gated broadcast calls `access.issueGrant({ resource: { type: "broadcast", id } })` and then the broadcast body endpoint with the grant. Email or push delivery never includes the gated body. It includes a link back to Amped.
 
@@ -385,7 +387,7 @@ Default is `NullPaymentVerifier`. It returns `not_purchased` and `available: fal
 
 ### 3.2 Screens
 
-**Creator rule builder in the block editor.** A "Who can open this?" panel on each link, media or text block. Everyone, Pool members, Members with a minimum stake. Paid, Reward points and Followers show as disabled with "On hold" or "Later". The panel shows how many current members meet the level (from the mirror) and a compliance note. Saving creates or reuses a named rule.
+**Creator rule builder in the block editor.** A "Who can open this?" panel on each link, media or text block. Everyone, Pool members, Members with a minimum stake. Paid, Points and Followers show as disabled with the label "Later" and no date. The panel shows how many current members meet the level (from the mirror) and a compliance note. Saving creates or reuses a named rule.
 
 ![Rule builder](img/access-gating-engine-rule-builder.png)
 
@@ -393,15 +395,15 @@ Default is `NullPaymentVerifier`. It returns `not_purchased` and `available: fal
 
 ![Locked bio](img/access-gating-engine-locked-bio.png)
 
-**Fan unlock flow.** A bottom sheet. Step 1 sign in and link a wallet if needed. Step 2 server check. Step 3a open. Step 3b shows current stake against the level and a link to the pool page. No yield or APY near the gate.
+**Fan unlock flow.** A bottom sheet. Step 1 sign in and link a wallet if needed. Step 2 server check. Step 3a open. Step 3b shows current stake against the level, the required disclosure and a link to the pool page. For `stake_min` and `pool_member` rules the disclosure shows in every step of the sheet (3.9). No yield, APY or pool performance figures near the gate.
 
 ![Unlock flow](img/access-gating-engine-unlock-flow.png)
 
-**Creator rules and stats.** Rules with usage, views, unlocks and unlock rate. Denial reasons. Recent unlocks by handle or truncated wallet.
+**Creator rules and stats.** Rules with usage, views, unlock attempts, unlocks and unlock rate. Top denial reasons. Recent unlocks by handle or truncated wallet.
 
 ![Rules and stats](img/access-gating-engine-rules-stats.png)
 
-Copy rules for all screens: "member", "membership", "access". Never "earn", "yield", "return", "reward for staking" or "profit" near a gate.
+Copy rules for all screens follow the single list in 3.9: banned words, approved alternatives and the required disclosure.
 
 ### 3.3 Evaluation algorithm
 
@@ -421,7 +423,7 @@ checkAccess(viewer, resource, freshness):
       pass = stake >= (kind == stake_min ? minStakeWei : MIN_GATE_STAKE_WEI)
       deny reason "stake_below_min" or "not_pool_member", hint stake {requiredWei, currentWei}
     paid: PaymentVerifier.verifyPurchase -> "purchased" passes, else "not_purchased"
-  log AccessEvent (sampled for "render", always for "open")
+  log AccessEvent (sampled for "render", always for "open", deduplicated per 3.8)
 ```
 
 Batch: `checkAccessBatch` groups resources by rule, reads each rule once, and reads each `(pool, wallet)` stake once. A bio with ten gated blocks on one pool costs one chain read at most.
@@ -452,29 +454,31 @@ Batch: `checkAccessBatch` groups resources by rule, reads each rule once, and re
 - Owners see the full block in the editor through the private blocks API. The public payload is locked even for the owner, so a cached page never carries a secret.
 - `ProfileView` renders a `LockedBlock` card. Link cards point to `/go/{blockId}`. Media and text cards open the unlock sheet and then call `access.revealBlock`.
 - `seo.ts` `profileSameAs` skips blocks with `gated: true`. Sitemap and `llms.txt` never list gated URLs. JSON-LD may state the count of member items, never their targets.
-- Add an automated test: render a bio with a gated link and assert its destination string does not appear anywhere in the HTML.
+- Share previews: Open Graph and X card tags on the bio never carry a gated destination, domain, text or media URL. Link unfurlers see only the public bio.
+- Add an automated test: render a bio with a gated link and assert its destination string does not appear anywhere in the HTML, the JSON-LD, the share preview tags, the sitemap or `llms.txt`.
+- Add a nightly leak scan in production. It fetches every public bio with a gated block, plus the sitemap and `llms.txt`, and searches for each gated destination string. It logs `access_leak_scan { pagesScanned, leaksFound }`. Any leak pages the on call engineer.
 
 ### 3.6 Security threat model
 
 | Threat | Control |
 |---|---|
 | URL leakage in HTML, JSON-LD, tRPC payload, favicon, referrer | Locked DTO strips `url` and `content`. `/go` redirect with `no-store` and `no-referrer`. Custom favicon suppressed. SSR test in 3.5. |
-| Leakage after unlock | Links: inherent after redirect, stated to creators (Decision 7). Files: S3 URLs expire in 5 minutes or less. Text and media: returned only in the `revealBlock` response. |
+| Leakage after unlock | Links: inherent after redirect, stated to creators (Decision 7). Files: CloudFront signed URLs expire in 5 minutes or less. Text and media: returned only in the `revealBlock` response. |
 | Grant replay by another user | `sub` must match the session user. `rid`, `aud` and `rv` must match. 10 minute `exp`. Optional single use `jti`. |
 | Forged wallet | Wallet comes only from `ctx.user.wallet`, which was linked through a verified Web3Auth ID token. No client supplied address is accepted. |
-| Stale stake (unstaked outside Amped) | Open time reads are at most 60 s old. Grants last 10 minutes. Worst case access after unstake is about 11 minutes. |
+| Stale stake (unstaked outside Amped) | Open time reads are at most 60 s old. Grants last 10 minutes. Worst case for new opens after unstake is about 11 minutes. Stream exception: a video or audio play session already started may finish, up to the 4 hour Mux token cap (3.1.4). The next play session is denied. |
 | Stake, unlock, unstake loop | Same bound as above. Access is per visit. Nothing permanent is handed out except a link destination, which Decision 7 covers. |
 | Sybil wallets | One wallet per account and one account per wallet (existing unique keys). 1 REVO floor. Creators set higher levels with `stake_min`. |
 | Chain RPC outage | Fail closed on open. Show "We could not confirm membership right now" with retry. |
 | Rule tampering | Rules are owned. Attach checks owner. Kind is immutable. Edits bump `rv` and void open grants. |
 | Enumeration of gated items | Block ids are already public in the bio. Locked DTO exposes no secret. Rate limits on `check` and `/go`. |
-| Privacy | No emails in any access response or stats. Wallets shown as `0x1234…abcd`. Recent unlocks show handle when public, else truncated wallet. |
+| Privacy | No emails in any access response or stats. Wallets shown as `0x1234…abcd`. Recent unlocks show handle when public, else truncated wallet. The D1 fix removes the creator email from `handle.getHandle` before public launch. |
 
 ### 3.7 Integration points for sibling specs
 
-- **Content system (#18, #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before presigning.
+- **Content system (#18, #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before signing CloudFront URLs or minting Mux tokens. Log `locked_view` for locked content renders so the 90-day KPIs cover content items. Members-only content ships no earlier than 2 weeks after Phase 1 of this spec (3.11).
 - **Broadcast.** Add `accessRuleId` to `Broadcast`. Register a resolver for `"broadcast"`. Use `listEligibleUserIds` for targeting and `checkAccess` at open time.
-- **Pool explorer.** May show "Members get access to N items" using `access.rules.list` counts for that pool. It must not show this next to APY.
+- **Pool explorer.** May show "Members get access to N items" using `access.rules.list` counts for that pool. It must not show this next to APY or pool performance figures. The pool page calls `access.trackPoolVisit` when opened with `?ref=gate`.
 - **Brand portal.** Can reuse `stake_min` and `pool_member` rules for brand campaign items once resolvers exist. No new kinds in v1.
 
 ### 3.8 Analytics events
@@ -483,50 +487,83 @@ Server side, written to `AccessEvent`:
 
 | `type` | When |
 |---|---|
-| `locked_view` | Locked block rendered in `checkBio` (sampled 1 in 10, scaled in stats) |
-| `check` | `access.check` called with `"open"` intent |
-| `denied` | Any open check that fails, with `reason` |
-| `unlocked` | Open check passed |
+| `locked_view` | Locked block rendered in `checkBio`, or locked content item rendered on a bio or content page (sampled 1 in 10, scaled in stats) |
+| `check` | An unlock attempt. Logged once at the first open time entry point: `/go`, `access.check` with `intent: "open"`, `issueGrant` or `revealBlock` |
+| `denied` | Any attempt that fails, with `reason` |
+| `unlocked` | Attempt passed |
 | `link_redirect` | `/go` returned 302 to the destination |
 | `grant_issued` | `issueGrant` succeeded |
-| `content_url_issued` | Content spec presigned a URL |
+| `content_url_issued` | Content spec signed a CloudFront URL or minted a Mux token |
+| `pool_visit` | Pool page opened from a gate link, through `access.trackPoolVisit` |
 
-Client side GA4 events (item #11): `gate_view`, `gate_unlock_start`, `gate_unlock_result {reason}`, `gate_open`. Parameters carry `rule_kind` and `resource_type`. Never a user id, email or full wallet.
+- `check`, `denied` and `unlocked` are deduplicated per viewer key and resource for 10 minutes. Redis `SET NX EX 600` on `access_attempt:{viewerKey}:{type}:{rid}`. The viewer key is `u:{userId}` when signed in. Otherwise it is the first 16 hex characters of `sha256(ip + daily salt)`. The IP itself is never stored.
+- A daily job writes the product analytics event `access_adoption_snapshot { poolOwners, poolOwnersWithGatedItem }`. `poolOwners` counts users who own a `CreatorPool`. `poolOwnersWithGatedItem` counts those who own at least one block, content item or broadcast with a non null `accessRuleId`.
+- The nightly leak scan (3.5) writes `access_leak_scan { pagesScanned, leaksFound }`.
+
+Client side GA4 events (item #11): `gate_view`, `gate_unlock_start`, `gate_unlock_result {reason}`, `gate_open`, `gate_pool_link_click`. Parameters carry `rule_kind` and `resource_type`. Never a user id, email or full wallet.
 
 Rule lifecycle events for product analytics: `access_rule_created`, `access_rule_updated`, `access_rule_deleted`, `block_gate_set`.
 
+**KPI to event.** Each 90-day target in the business overview maps to one measurement. Server events are the source of truth. GA4 events are for funnel debugging.
+
+| KPI (90-day target, proposed) | Measurement |
+|---|---|
+| Pool owners with at least one gated item (30%) | `poolOwnersWithGatedItem` divided by `poolOwners` from the latest `access_adoption_snapshot` |
+| Unlock success rate (45%) | `unlocked` count divided by `check` count over the window |
+| Locked views that lead to an unlock attempt (8%) | `check` count divided by scaled `locked_view` count (sampled count times 10) |
+| Visits to the pool page from a locked item (10% of denied attempts) | `pool_visit` count divided by `denied` count |
+| Denials because the chain was unreachable (under 1%) | `denied` with `reason = chain_unavailable` divided by `check` count |
+| Leaked destinations in public pages (0) | Sum of `leaksFound` from `access_leak_scan`. The SSR leak test in CI must also pass on every build |
+
 ### 3.9 Compliance
 
-- **Counsel review required before launch** for `stake_min` and `pool_member`. Access tied to staking can look like a benefit of an investment. Launch is blocked until securities counsel signs off on the kinds, the copy and the stats screen.
-- Gates grant access to creator content only. They never grant tokens, revenue share, discounts on tokens or any economic benefit.
-- Copy frames access as membership. Required disclosure on the unlock sheet when a stake is short: "Staking carries risk. Membership access is not a return on your stake."
-- The pool link from a gate goes to the pool page. It does not start a stake transaction in one tap.
-- `reward_points`: points have no cash value and cannot be transferred. Counsel review before launch.
-- `paid`: tax, refund and consumer protection terms come from the payments project.
+One list covers product copy and marketing. It matches the business overview's "Compliance guardrails for marketing".
+
+- **Counsel sign-off first.** Stake-based gates (`stake_min`, `pool_member`) cannot launch or be marketed publicly until securities counsel approves the rule types, the copy and the stats screen. Access tied to staking can look like a benefit of an investment. Pilot outreach uses counsel-approved copy only.
+- **Securities.** Never promise returns, yield, earnings or price movement. Gates unlock creator content only. They never grant tokens, revenue share, discounts or any economic benefit, and copy must not imply otherwise.
+- **Banned words** near a gate and in gating marketing: earn, yield, return, returns, reward for staking, profit, APY, APR, invest, investment, passive income, price, gains, unlock value. The list lives in `packages/constants/src/compliance.ts` as `ACCESS_BANNED_TERMS`.
+- **Approved alternatives:** member, membership, members only, access, join, support, back, "members of my pool".
+- **Required disclosure.** The unlock sheet shows "Staking carries risk. Membership access is not a return on your stake." It shows in every step of the sheet for `stake_min` and `pool_member` rules. It is the constant `ACCESS_STAKE_DISCLOSURE` in `compliance.ts`. Keep it in screenshots and demo videos.
+- **Placement.** Never show gate benefits next to APY or pool performance figures. The pool link from a gate goes to the pool page. It never starts a stake transaction in one tap. Ads and posts link to the pool page and never to a one-tap stake.
+- **Privacy.** Stats show public handles or shortened wallets, never emails. Demo screenshots use test accounts. The creator email exposure (D1) must be fixed before public launch.
+- **Later features.** Describe paid access as "later" with no date. Points are "points" with no cash value, never "tokens". `reward_points` points cannot be transferred and need counsel review before launch. For `paid`, tax, refund and consumer protection terms come from the payments project, and counsel reviews paid copy before any price appears near a gate.
+- **FTC.** Pilot creators who promote gating in exchange for early access or perks must disclose it.
+
+**Automated check.** `scripts/check-compliance-copy.ts` runs in every build and in CI. It scans string literals and JSX text in the gating components of `apps/client` and `apps/landingpage` (rule builder, locked card, unlock sheet, rules and stats page) plus any gating marketing copy stored in the repo. It matches `ACCESS_BANNED_TERMS` case insensitive on word boundaries and fails the build on any match. It also fails on em dashes and en dashes. The only exemption is `ACCESS_STAKE_DISCLOSURE`, which contains "return" by design. Gating marketing copy kept outside the repo is checked against the same exported list before publishing.
 
 ### 3.10 Acceptance criteria
 
 1. A creator can create a `stake_min` or `pool_member` rule only for their own pool and attach it to a link, media or text block.
 2. `rules.create` rejects `follower` and `reward_points`, and rejects `paid` while `NullPaymentVerifier` is active.
-3. A signed out visitor sees the locked card. The page HTML, the `getHandle` response and the JSON-LD contain no destination URL, domain or text content of the gated block.
+3. A signed out visitor sees the locked card. The page HTML, the `getHandle` response, the JSON-LD, the Open Graph and X card tags, the sitemap and `llms.txt` contain no destination URL, domain or text content of the gated block.
 4. A member at or above the level opens the link through `/go` in under 2 s at p95 with a warm cache.
-5. A member below the level sees current stake, required stake and a link to the pool.
+5. A member below the level sees current stake, required stake, the required disclosure and a link to the pool page.
 6. After an unstake confirmed through Amped, the next open is denied. After an unstake made directly on chain, opens are denied within 60 s.
 7. A grant for resource A fails on resource B, for another user, after 10 minutes, and after the rule is edited.
 8. When the chain RPC fails, opens are denied with `chain_unavailable` and no grant is issued.
-9. The rules page shows views, attempts, unlocks and denial reasons. No emails. Wallets are truncated.
+9. The rules page shows views, attempts, unlocks, unlock rate and top denial reasons. No emails. Wallets are truncated.
 10. No em dashes or en dashes in any shipped copy.
 11. `pnpm run typecheck` and `pnpm run build` pass. Unit tests cover each kind, the batch path, grant verification failures and the SSR leak test.
+12. The rule builder shows Paid, Points and Followers as disabled with "Later" and no date.
+13. For `stake_min` and `pool_member` rules, `ACCESS_STAKE_DISCLOSURE` shows in every step of the unlock sheet. The pool link opens the pool page and never starts a stake transaction.
+14. `scripts/check-compliance-copy.ts` finds no term from `ACCESS_BANNED_TERMS` and no em or en dash on gating surfaces. Any match fails the build. Only `ACCESS_STAKE_DISCLOSURE` is exempt.
+15. `handle.getHandle` returns no creator email (D1 fix) before any public gating post.
+16. On staging, every server event in 3.8 is written, and each KPI in the KPI to event table computes from those events. Repeated attempts on one resource by one viewer within 10 minutes count once.
+17. The nightly leak scan runs in production and reports `leaksFound = 0`.
 
 ### 3.11 Phased rollout
 
-| Phase | Scope | Gate |
-|---|---|---|
-| 0 | Counsel review of kinds and copy. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry. | Counsel sign off. Sibling spec owners confirm contract. |
-| 1 | Engine with `stake_min` and `pool_member`. Link blocks only. `/go`. Locked DTO. SEO exclusions. Rule builder. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist. | SSR leak test green. 10 pilot creators. |
-| 2 | Media and text reveal. `issueGrant` for content (#18, #19) and broadcasts. Rules and stats page. General availability for stake based kinds. | Pilot unlock rate and error rate reviewed. |
-| 3 | `paid` via the Revolution payments `PaymentVerifier` (#16, #18). `reward_points` ledger (#17). | Payments shipped. Counsel review of points. |
-| 4 | Combinators (`any`, `all`). SIWE for external wallets. `follower` once a follow graph exists. | Demand from creators. |
+Timings follow the business overview launch plan. All dates are proposed.
+
+| Phase | Timing | Scope | Gate |
+|---|---|---|---|
+| 0 | October to November 2026 (proposed) | Counsel review of rule types, copy and the stats screen. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry, `compliance.ts` list and disclosure. D1 email fix in `handle.getHandle`. Recruit 10 pilot creators with counsel-approved outreach copy. | Counsel sign off. D1 fix live. Sibling spec owners confirm contract. |
+| 1 | December 2026, after counsel sign off (proposed) | Engine with `stake_min` and `pool_member`. Link blocks only. `/go`. Locked DTO. SEO and share preview exclusions. Rule builder. Analytics events from 3.8 and the compliance copy check, so 90-day KPIs start at launch. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist of the 10 pilot creators. | Counsel sign off recorded. SSR leak test green and nightly leak scan clean before any public post. |
+| 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. | Pilot unlock rate and error rate reviewed. |
+| 3 | Later, no date | `paid` via the Revolution payments `PaymentVerifier` (#16, #18). `reward_points` ledger (#17). | Payments shipped. Counsel review of points and paid copy. |
+| 4 | Later, no date | Combinators (`any`, `all`). SIWE for external wallets. `follower` once a follow graph exists. | Demand from creators. |
+
+Gating ships before any members-only content or gated broadcast. Those features depend on Phase 1 being live and on the counsel sign off above.
 
 ## Sources
 
@@ -545,3 +582,7 @@ Rule lifecycle events for product analytics: `access_rule_created`, `access_rule
 - Patreon, Setting post access: https://support.patreon.com/hc/en-us/articles/37807653033997-Setting-post-access-for-your-Patreon-audience
 - Stan Store, How customers access a digital product: https://help.stan.store/article/74-how-will-my-customer-download-my-digital-product
 - Gumroad, License keys: https://gumroad.com/help/article/76-license-keys
+
+## Revision log
+
+2026-09-26: aligned with business overview (added overview link; D1 email exposure noted and made a launch gate; share preview exclusion and a nightly leak scan added; builder labels set to "Later" with Points in place of Reward points; unlock sheet shows the disclosure in every step for stake rules; banned words, approved alternatives, disclosure, placement, privacy, later features and FTC rules matched to the overview as one product plus marketing list; build-time copy check added; stream exception and CloudFront wording aligned with the content spec; attempt dedupe, `intent` on `access.check`, `pool_visit`, adoption snapshot and leak scan events plus a KPI to event table added; phases given proposed timings, counsel and D1 gates and the gating before members-only content dependency; acceptance criteria 12 to 17 added and 3, 5 and 9 tightened).

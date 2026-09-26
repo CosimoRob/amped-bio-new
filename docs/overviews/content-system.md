@@ -6,7 +6,7 @@ Engineering spec: [docs/features/content-system.md](../features/content-system.m
 
 ## Summary
 
-The content system lets creators upload media once, then show it on the bio, keep it for members, or attach it to broadcasts. Today Amped bios only link out, so hosted content keeps fans on Amped and gives membership something to open. Version 1 ships free and members-only content, and paid content plugs in later with no rebuild. Every file is scanned for malware and child sexual abuse material before anyone can see it.
+The content system lets creators upload media once, then show it on the bio, keep it for members, or attach it to broadcasts. Today Amped bios only link out, so hosted content keeps fans on Amped and gives membership something to open. Version 1 ships free and members-only content, and paid content plugs in later with no rebuild. Every upload is checked before it goes live: known child sexual abuse material matching on images and video, and malware scanning on documents and downloadable files.
 
 ## What it does
 
@@ -28,7 +28,7 @@ The content system lets creators upload media once, then show it on the bio, kee
 **For Amped the business**
 
 - Keeps fans on amped.bio instead of sending them to other sites.
-- No file is visible before malware scanning, known-CSAM hash matching and an adult content check pass.
+- No file is visible before its checks pass: known-CSAM hash matching and an adult content check on images and video, and malware scanning on documents and downloads. Images and video are re-encoded before serving.
 - Cost scales with use. The spec estimates about $30 per month at 1,000 creators, $1,120 at 10,000 and $12,150 at 100,000.
 - A DMCA notice process and repeat infringer policy protect Amped's legal safe harbor.
 - Content becomes the attachment for broadcasts and the product for paid unlocks later.
@@ -109,7 +109,7 @@ Social post: "Your bio just got a library. Upload a video, a track or a guide to
 ## Compliance guardrails for marketing
 
 - **Securities.** Members-only content is tied to staking, which is under securities counsel review. Never promise returns, yield, earnings or price movement. Members-only content cannot be marketed until counsel signs off.
-- **Banned words** in content marketing and item copy: earn, yield, returns, profit, invest, investment, passive income, income on autopilot, price, gains.
+- **Banned words** in content marketing and item copy: earn, yield, return, returns, reward for staking, APY, APR, unlock value, profit, invest, investment, passive income, income on autopilot, price, gains. Paid content copy will need counsel review because gating bans "price".
 - **Approved alternatives:** members only, membership, access, join, support, library, drop, "for my members".
 - **Required disclosure.** The locked page states that staking unlocks membership benefits, is not a purchase of content and carries no promise of return. Keep it in screenshots.
 - **CSAM.** Known-CSAM hash matching is a launch requirement. Matches are reported to NCMEC. Say "every upload is scanned before it goes live". Never claim "100% safe".

@@ -15,7 +15,7 @@ Broadcast gives every creator a direct, one-way line to the members of their cre
 - Write a titled update of up to 5,000 characters with bold, italics, up to 5 links and one file from their content library.
 - Send to all members, or only to members who meet a rule such as "500 REVO staked or more".
 - See the exact member count and email reach before sending. Schedule up to 30 days ahead.
-- Preview as inbox and as email, and send a test to themselves.
+- Preview as inbox and as email, and send a test to themselves. Scheduling arrives in a later phase.
 - See totals after sending: recipients, inbox reads, emails delivered, attachment opens, opt-outs and reports. No tracking of individual members.
 
 **For fans and members**
@@ -95,12 +95,12 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 | Phase | Timing | Actions | Channels |
 |---|---|---|---|
 | Pre-launch | October 2026 (proposed) | Fix the public creator email exposure (D1). Stop logging recipient addresses. Counsel approves the policy text and word list. Set up the send.amped.bio sending domain. Recruit 15 pilot pool owners. | Creator outreach via Apollo.io. Direct messages on X. Teaser on Rob's LinkedIn. |
-| Launch | November 2026 (proposed) | Inbox-only Broadcast for invited creators, sending to all members. Publish the launch post and a 60-second creator walkthrough. | Amped blog. X. LinkedIn. TikTok and Instagram short video. AI Leader Edge podcast segment. |
-| Post-launch | December 2026 to January 2027 (proposed) | Turn on email opt-in, one-click unsubscribe and stats. Add rule-based audiences once gating ships. Open to all pool owners. Publish 3 pilot case studies. | Amped blog case studies. LinkedIn and X threads. Short video creator testimonials. Apollo.io sequences to similar creators. |
+| Launch | November 2026 (proposed) | Inbox-only Broadcast for invited creators, sending to all members, with inbox totals. Publish the launch post and a 60-second creator walkthrough. | Amped blog. X. LinkedIn. TikTok and Instagram short video. AI Leader Edge podcast segment. |
+| Post-launch | December 2026 to January 2027 (proposed) | Turn on email opt-in, one-click unsubscribe and email stats. Add rule-based audiences once gating ships. Open to all pool owners. Publish 3 pilot case studies. | Amped blog case studies. LinkedIn and X threads. Short video creator testimonials. Apollo.io sequences to similar creators. |
 
 | Metric | Target at 90 days | Why |
 |---|---|---|
-| Active pool owners who sent at least one broadcast | 40% (proposed) | Shows creators value a direct line to members. |
+| Pool owners with Broadcast access and at least one member who sent a broadcast | 40% (proposed) | Shows creators value a direct line to members. |
 | Inbox read rate within 7 days | 55% (proposed) | Measures whether members come back to Amped. |
 | Member email opt-in rate | 30% (proposed) | Sizes email reach under explicit consent. |
 | Held broadcasts rejected at review | Under 10% (proposed) | Shows creators understand the content policy. |
@@ -110,7 +110,7 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 ## Compliance guardrails for marketing
 
 - **Securities.** REVO staking is under securities counsel review. No marketing or creator message may promise returns, yield, earnings or price movement. Describe joining a pool as membership in, and support for, a creator's community.
-- **Banned words** in marketing, templates and creator broadcasts: yield, APY, APR, returns, ROI, profit, earn, passive income, rewards grow, guaranteed, double your, 10x, moon, pump, price target, going up, invest, investment, investors, dividend, buy REVO, stake more, add to your stake.
+- **Banned words** in marketing, templates and creator broadcasts: yield, APY, APR, returns, ROI, profit, earn, earning, earnings, passive income, rewards grow, guaranteed, double your, 10x, moon, pump, price target, going up, invest, investment, investors, dividend, buy REVO, stake more, add to your stake.
 - **Approved alternatives:** member, membership, join, back, support, community update, member access, "members of my pool".
 - **Fixed footer.** Every broadcast carries: "{Creator} wrote this message. Amped.Bio delivers it and does not endorse it. Nothing in a broadcast is financial advice." Keep it visible in screenshots and demos.
 - **Privacy.** Creators never see member emails. Demo screenshots use test accounts only. Do not promote Broadcast publicly until the creator email exposure (D1) is fixed.

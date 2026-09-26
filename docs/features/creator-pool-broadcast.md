@@ -2,6 +2,7 @@
 
 Status: spec for review. Build Board item #1.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
+Business overview: [docs/overviews/creator-pool-broadcast.md](../overviews/creator-pool-broadcast.md)
 
 ## 1. Research
 
@@ -19,7 +20,7 @@ Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
 - **Notifications.** There is no notification, inbox or preference model.
 - **Telegram.** Today it is only a community link and a static block. There is no bot and no link between an Amped user and a Telegram chat.
 - **Editor shell.** `apps/client/src/components/Sidebar.tsx` lists panels by `EditorPanelType` with lucide icons and supports `environmentFlag` (for example `VITE_SHOW_RNS`). The pool owner tools live in the "My Pool" panel (`components/panels/createrewardpool`). Visual language: white surfaces, gray 200 borders, blue 600 accents, Inter.
-- **Known privacy issue.** `handle.getHandle` returns the creator's email publicly (`apps/server/src/trpc/handle.ts`). Broadcast does not depend on it. It should be fixed before broadcast ships, because broadcast raises the value of knowing who a creator is.
+- **Known privacy issue (D1).** `handle.getHandle` returns the creator's email publicly (`apps/server/src/trpc/handle.ts`). Broadcast does not depend on it. It should be fixed before broadcast ships, because broadcast raises the value of knowing who a creator is.
 
 ### Best in breed
 
@@ -146,7 +147,7 @@ Mockup sources: `docs/features/mockups/creator-pool-broadcast-*.html`.
 
 ### 3.2 Where the UI lives
 
-- **Composer and Sent.** New editor panel `broadcast` in `apps/client`, icon `Megaphone`, label "Broadcast". Shown only to users who own a pool, like "My Pool". Behind `VITE_SHOW_BROADCAST` using the existing `environmentFlag` pattern. The "My Pool" dashboard gets a "Send a broadcast" shortcut.
+- **Composer and Sent.** New editor panel `broadcast` in `apps/client`, icon `Megaphone`, label "Broadcast". Shown only to users who own a pool, like "My Pool". Behind `VITE_SHOW_BROADCAST` using the existing `environmentFlag` pattern. The env flag is build-wide, so the invite-only pilot also needs a server check: while `BROADCAST_INVITE_ONLY` is true, the panel shows and `send` succeeds only for owners with `BroadcastSenderStatus.invitedAt` set. The composer states email reach as "members who opt in get email", never as "email all your fans". The "My Pool" dashboard gets a "Send a broadcast" shortcut.
 - **Inbox.** New panel `inbox`, icon `Bell`, label "Inbox", shown to every signed in user, with an unread dot. Deep link: `app.amped.bio/inbox/{broadcastId}`. Unread count polls every 60 seconds and on window focus in v1.
 - **Stake flow opt in.** The stake confirmation adds the unticked email box from decision 2.
 - **Admin.** A "Broadcast review" view in the existing admin area.
@@ -304,6 +305,7 @@ model BroadcastSenderStatus {
   pausedAt    DateTime?
   pausedReason String?  @db.VarChar(255)
   firstApprovedAt DateTime? // set when the first broadcast passes review
+  invitedAt   DateTime? // set by admin for invite-only pilot creators
 
   @@map("broadcast_sender_status")
 }
@@ -346,7 +348,7 @@ New `broadcast` router in `apps/server/src/trpc/broadcast/`, merged in `apps/ser
 
 **`notifications`** (`privateProcedure`): `getPreferences`, `setGlobalEmail({ enabled })`, `setCreatorEmail({ creatorUserId, enabled, source })`, `muteCreator({ creatorUserId, days: 7 | 30 })`, `unmuteCreator`.
 
-**`admin.broadcasts`** (admin procedures): `reviewQueue`, `approve({ id })`, `reject({ id, note })`, `listReports`, `pauseSender({ userId, reason })`, `resumeSender({ userId })`.
+**`admin.broadcasts`** (admin procedures): `reviewQueue`, `approve({ id })`, `reject({ id, note })`, `listReports`, `pauseSender({ userId, reason })`, `resumeSender({ userId })`, `inviteSender({ userId })`, `revokeInvite({ userId })`.
 
 **Express routes** (not tRPC, because mail clients call them directly):
 
@@ -418,7 +420,8 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 
 **Keyword check.**
 
-- A word and phrase list in `packages/constants/src/broadcast.ts`, grouped by category: yield (`apy`, `apr`, `yield`, `passive income`, `rewards grow`), returns (`roi`, `returns`, `profit`, `guaranteed`, `double your`), price (`price target`, `moon`, `10x`, `pump`, `going up`), investment (`invest`, `investment`, `investors`, `dividend`), solicitation (`buy revo`, `stake more`, `add to your stake`).
+- One banned list covers product copy, templates, creator broadcasts and marketing. It lives in `packages/constants/src/broadcast.ts` as `BROADCAST_BANNED_TERMS`, grouped by category: yield (`apy`, `apr`, `yield`, `passive income`, `rewards grow`), returns (`roi`, `returns`, `profit`, `earn`, `guaranteed`, `double your`), price (`price target`, `moon`, `10x`, `pump`, `going up`), investment (`invest`, `investment`, `investors`, `dividend`), solicitation (`buy revo`, `stake more`, `add to your stake`).
+- Approved alternatives, shown next to a flag in the composer: member, membership, join, back, support, community update, member access, "members of my pool".
 - Matching is case insensitive on word boundaries after Unicode normalization. It runs in the composer as the creator types and again on the server at send.
 - A match holds the broadcast for admin review (decision 3). The creator can edit and send instead.
 - Counsel approves the list (decision 8).
@@ -427,7 +430,19 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 
 **Automatic pause.** Broadcasting pauses for a sender, pending admin review, when any of these happen on a single broadcast: reports reach 1% of recipients (minimum 3 reports), email complaints exceed 0.3% of emails sent, or an admin rejects 2 broadcasts within 30 days.
 
-**Fixed copy.** Templates and UI never mention rewards, returns or yield. The inbox and email footer carry fixed text the creator cannot edit: "{Creator} wrote this message. Amped.Bio delivers it and does not endorse it. Nothing in a broadcast is financial advice."
+**Fixed copy.** Templates and UI never mention rewards, returns or yield. The inbox and email footer carry fixed text the creator cannot edit: "{Creator} wrote this message. Amped.Bio delivers it and does not endorse it. Nothing in a broadcast is financial advice." It is stored as `BROADCAST_FOOTER` in `packages/constants/src/broadcast.ts`. Screenshots and demos keep it visible.
+
+**Automated check.** A script, `scripts/check-compliance-copy.ts`, runs in every build and in CI. It scans string literals and JSX text in the broadcast, inbox and notification components of `apps/client` and `apps/landingpage`, the email templates in `apps/server/src/utils/email/`, and any Broadcast marketing copy stored in the repo. It matches `BROADCAST_BANNED_TERMS` with the same rules as the composer check. Any match fails the build. The only exemptions are the policy text above and the word list itself.
+
+**Marketing and disclosure rules.** These apply to all Broadcast marketing, demos and pilot material.
+
+- Describe joining a pool as membership in, and support for, a creator's community. Never promise returns, yield, earnings or price movement.
+- Say "members who opt in get email". Never say "email all your fans".
+- Creators never see member emails. Demo screenshots use test accounts only.
+- Do not promote Broadcast publicly until the D1 fix is live.
+- Do not claim open-rate analytics. v1 has no open tracking.
+- Subject lines must not mislead. Every email names the sender, carries a postal address and a working one-click unsubscribe.
+- Pilot creators who post about Broadcast for early access or any perk must disclose it, for example "#ad" or "Amped partner". The pilot invitation states this requirement.
 
 **Limits.**
 
@@ -459,20 +474,34 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 | Event | Where | Properties |
 |---|---|---|
 | `broadcast_composer_opened` | client | `pool_id` |
+| `broadcast_daily_snapshot` | server, daily at 00:00 UTC | `eligible_owners` (pool owners with Broadcast access and at least one member), `owners_sent_ever`, `member_pairs` (member and creator pairs), `member_pairs_email_opted_in` |
 | `broadcast_audience_estimated` | client | `pool_id`, `audience_kind`, `members` |
 | `broadcast_content_flagged` | client, server | `categories` |
 | `broadcast_sent` | server | `broadcast_id`, `pool_id`, `audience_kind`, `recipients`, `email_eligible`, `has_attachment`, `scheduled` |
 | `broadcast_held_for_review` | server | `broadcast_id`, `reason` (`flagged` or `first_send`) |
-| `broadcast_review_decided` | server | `broadcast_id`, `decision` |
-| `broadcast_fanout_completed` | server | `broadcast_id`, `duration_ms` |
+| `broadcast_review_decided` | server | `broadcast_id`, `decision` (`approved` or `rejected`), `reason` (`flagged` or `first_send`) |
+| `broadcast_fanout_completed` | server | `broadcast_id`, `pool_id`, `recipients`, `email_eligible`, `duration_ms` |
 | `broadcast_email_result` | server | `broadcast_id`, `status` |
 | `inbox_opened` | client | `unread` |
-| `broadcast_read` | server | `broadcast_id` |
+| `broadcast_read` | server | `broadcast_id`, `first_read`, `hours_since_delivery` |
 | `broadcast_attachment_opened` | server | `broadcast_id`, `allowed` |
 | `broadcast_link_clicked` | server | `broadcast_id`, `channel` |
 | `broadcast_email_pref_changed` | server | `scope`, `enabled`, `source` |
 | `broadcast_reported` | server | `broadcast_id`, `reason` |
 | `broadcast_sender_paused` | server | `reason` |
+
+`broadcast_sent` fires when a broadcast enters `QUEUED`, including after admin approval. Its `recipients` is the estimate at that moment. `broadcast_fanout_completed` carries the frozen count. `first_read` is true only on the first `inbox.get` for a delivery.
+
+**KPI to event.** Each 90-day target in the business overview maps to one measurement.
+
+| KPI (90-day target, proposed) | Measurement |
+|---|---|
+| Active pool owners who sent at least one broadcast (40%) | `owners_sent_ever` divided by `eligible_owners` from the latest `broadcast_daily_snapshot` |
+| Inbox read rate within 7 days (55%) | `broadcast_read` with `first_read = true` and `hours_since_delivery <= 168`, divided by the sum of `recipients` on `broadcast_fanout_completed` |
+| Member email opt-in rate (30%) | `member_pairs_email_opted_in` divided by `member_pairs` from `broadcast_daily_snapshot`. Measured from phase 2, when opt-in ships. |
+| Held broadcasts rejected at review (under 10%) | `broadcast_review_decided` with `decision = rejected` divided by all `broadcast_review_decided` |
+| Spam complaint rate (under 0.1%) | `broadcast_email_result` with `status = COMPLAINED` divided by those with `status = SENT`. Cross-checked against Google Postmaster Tools. |
+| Reports per broadcast (under 0.5% of recipients) | Per broadcast, count of `broadcast_reported` divided by `recipients` on its `broadcast_fanout_completed` |
 
 ### 3.10 Acceptance criteria
 
@@ -492,32 +521,45 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 14. The report button creates one report per member per broadcast. Crossing the pause threshold pauses the sender and shows a notice in the composer.
 15. Killing the worker mid send and restarting it sends no duplicate email.
 16. Stats show totals only and match the delivery table.
-17. No UI copy, template or fixed footer contains the words yield, APY, returns, profit or investment, except the policy text that prohibits them.
+17. No UI copy, template or fixed footer contains any term in `BROADCAST_BANNED_TERMS`, except the policy text that prohibits them. `scripts/check-compliance-copy.ts` runs in every build and fails it on any match.
 18. Typecheck and build pass for `server`, `client` and `landingpage`.
+19. Every inbox message and every email shows the fixed footer, word for word as `BROADCAST_FOOTER`. The creator cannot edit or remove it.
+20. Every broadcast email names the sender in `From`, carries the postal address, and has working `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
+21. The stake confirmation email box is unticked by default. Every consent change writes a `NotificationConsentEvent`.
+22. While `BROADCAST_INVITE_ONLY` is true, `send` returns `FORBIDDEN` for an owner without `invitedAt`.
+23. Composer and marketing copy in the repo never contains "email all your fans". Email reach is labeled "members who opt in get email".
+24. Every KPI in 3.9 can be computed from events fired in staging. A test broadcast produces `broadcast_fanout_completed` with `recipients`, `broadcast_read` with `first_read`, and a `broadcast_daily_snapshot` on schedule.
 
 ### 3.11 Phased rollout
 
-**Phase 0: prerequisites.**
+Overview launch stages: Pre-launch is phase 0. Launch is phase 1. Post-launch is phase 2. Phase 3 follows the 90-day window.
 
-- Fix `handle.getHandle` email exposure.
+**Phase 0: prerequisites. October 2026 (proposed).**
+
+- Fix `handle.getHandle` email exposure (D1).
 - Stop logging recipient addresses in `email.ts`.
 - Choose the provider and set up `send.amped.bio` with SPF, DKIM, DMARC (`p=none` with reporting, then `quarantine`), and reverse DNS.
-- Counsel approves the policy text and word list.
+- Counsel approves the policy text, the fixed footer and the word list.
+- Ship `scripts/check-compliance-copy.ts` in the build.
+- Recruit 15 pilot pool owners and set `invitedAt` for each. The invitation includes the FTC disclosure rule (3.8).
+- Gate to phase 1: D1 fix live and counsel sign-off recorded. No public promotion before both.
 
-**Phase 1: inbox only.**
+**Phase 1: inbox only. November 2026 (proposed).**
 
 - Models, `broadcast.creator` and `broadcast.inbox`, BullMQ fan out, composer, inbox panel, content check, admin review, report button, rate limits.
 - `ALL_MEMBERS` audience only. No email yet.
-- Behind `VITE_SHOW_BROADCAST` for invited creators.
+- Inbox stats: recipients, inbox reads and reports. Analytics events and `broadcast_daily_snapshot` from 3.9, so 90-day KPIs start at launch.
+- Behind `VITE_SHOW_BROADCAST` and `BROADCAST_INVITE_ONLY` for invited creators.
 
-**Phase 2: email and rules.**
+**Phase 2: email and rules. December 2026 to January 2027 (proposed).**
 
-- Opt in at stake and in the inbox, preferences, email template, one click unsubscribe, webhooks, suppression, stats.
-- `ACCESS_RULE` audiences once the gating engine ships its batch resolver.
+- Opt in at stake and in the inbox, preferences, email template, one click unsubscribe, webhooks, suppression, email stats.
+- `ACCESS_RULE` audiences once the gating engine ships its batch resolver. This is a hard dependency. Without it, only `ALL_MEMBERS` ships.
 - `ContentItem` attachments once the content system ships.
-- Open to all pool owners.
+- Open to all pool owners. Set `BROADCAST_INVITE_ONLY` to false.
+- Gate to email: `send.amped.bio` passes SPF, DKIM and DMARC checks, and one click unsubscribe passes criterion 8.
 
-**Phase 3: reach.**
+**Phase 3: reach. After January 2027 (proposed).**
 
 - Scheduling UI, socket.io live inbox, web push.
 - Follower audience if a follow model ships.
@@ -551,3 +593,7 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 - Mailgun, Gmail and Yahoo bulk sender requirements: https://www.mailgun.com/state-of-email-deliverability/chapter/yahoogle-bulk-senders/
 - FTC, CAN-SPAM Act compliance guide: https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business
 - RFC 8058, One-click unsubscribe: https://datatracker.ietf.org/doc/html/rfc8058
+
+## Revision log
+
+2026-09-26: aligned with business overview (added overview link; labeled the email exposure fix D1; added "earn" to the banned list and made it one product plus marketing list; added approved alternatives and marketing, consent, CAN-SPAM and FTC disclosure rules; stored the fixed footer as a constant; added a build-time banned-word check; added a server invite gate for the 15-creator pilot; moved inbox stats and analytics to launch; added a daily snapshot event, KPI properties and a KPI to event table; gave phases proposed dates and gates for D1, counsel sign-off and the gating engine; added acceptance criteria 19 to 24 and tightened 17).

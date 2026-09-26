@@ -23,7 +23,7 @@ The brand portal lets verified brands search opted-in Amped creators and send th
 - Turn on "Open to brand collaborations" with one switch. It is off by default and requires an 18+ attestation.
 - Receive requests in a separate Brand requests inbox, with accept, decline, block and report.
 - Share a business contact only when they accept. Their login email is never shared.
-- Cap new requests at 20 per week, pause for 1 to 4 weeks, and exclude categories. Crypto and trading promotions are excluded by default.
+- Cap new requests at 20 per week, pause for 1, 2 or 4 weeks, and exclude categories. Crypto and trading promotions are excluded by default.
 
 **For Amped the business**
 

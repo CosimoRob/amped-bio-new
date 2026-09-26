@@ -2,6 +2,7 @@
 
 Status: spec for review. Build Board item #7.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
+Business overview: [docs/overviews/brand-portal.md](../overviews/brand-portal.md)
 
 Rob's brief: "a brand portal that allows brands to search for Amped bios and contact those bios or creators directly."
 
@@ -39,7 +40,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 |---|---|---|---|
 | **Linktree Brand Deals** ([help](https://linktr.ee/help/en/articles/12135302-create-your-brand-deals-profile)) | Opt-in Brand Deals profile inside a link-in-bio product. US only. Brands search by metrics and collaboration history. | Closest analogue to Amped. Explicit opt-in. Profile fields for partnership types (paid, sponsored links, affiliate, gifted), past brand work, optional rate card. Stats pulled from connected Instagram and TikTok accounts, not typed in. | Direct messaging gated behind a creator loyalty tier. It rewards engagement with Linktree, not fit with the brand. |
 | **Beacons Media Kit** ([permissions](https://help.beacons.ai/en/articles/4705345)) | Creator-owned media kit with five access levels: unlocked, email, brand deal offer, password, approved access. | The creator decides how much a brand sees and when. "Submit an offer to unlock" turns browsing into a qualified request. | Email-gate mode collects brand emails with no verification. |
-| **Passionfroot** ([creators](https://www.passionfroot.me/creators)) | Creator storefront with booking forms. B2B focus. Brands pay 2% on creator-sourced deals and 15% on platform-matched deals. | Structured request form instead of free chat. Clear split between deals the creator brought and deals the platform brought. | Depends on in-platform payments, which Amped has on hold. |
+| **Passionfroot** ([creators](https://www.passionfroot.me/creators)) | Creator storefront with booking forms. B2B focus. Brands pay 5% on creator-sourced deals. Creators pay 15% on partner network deals. | Structured request form instead of free chat. Clear split between deals the creator brought and deals the platform brought. | Depends on in-platform payments, which Amped has on hold. |
 | **Collabstr** ([pricing](https://collabstr.com/pricing)) | Open marketplace. Free brand search. Pro $249 per month, Premium $333 per month billed annually. 10% hiring fee, 5% on Premium. | Free search lowers the barrier. Chat before hiring is a paid feature, which limits spam. | Creator listings with public prices invite a race to the bottom. |
 | **Modash** ([pricing](https://www.modash.io/pricing)) | Discovery database of 380M+ profiles. Essentials $199 per month with 300 opened profiles and 150 email unlocks. | Credit model: opened profiles and unlocks are metered per month. Strong filters. | Indexes creators who never opted in and sells their emails. Amped must not do this. |
 | **Aspire** ([marketplace](https://help.aspireiq.com/en/articles/6023393-overview-of-aspire-s-creator-marketplace)) | Brands post campaigns. Creators apply. Free for creators. | Inbound model: creators self-select, so brands get warm replies. Good Phase 3 addition. | Heavy campaign tooling is more than Amped needs now. |
@@ -50,7 +51,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 1. **Opt-in only, default off.** Only creators who turn on "Open to brand collaborations" are searchable.
 2. **Structured first contact.** A request is a form with a type, subject, message and deadline. It is not an open chat.
 3. **Contact after consent.** The brand never sees the creator's email. The creator decides on accept whether to share a business contact.
-4. **Honest labels.** Every audience number carries its source: "Self-reported" or "Verified". Staker counts carry "On-chain".
+4. **Honest labels.** Every audience number carries its source: "Self-reported" or "Verified". Pool member counts carry "On-chain".
 5. **Metered outreach.** A monthly request quota per brand, one open request per creator, and creator-side caps.
 6. **Separate inbox.** Brand requests live in their own editor panel, with their own notifications.
 
@@ -58,9 +59,9 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 
 ### 2.1 Outcomes
 
-- **Brands** find creators by niche, platform, audience range, pool community size, location and language. They send a structured request and track it to a reply.
+- **Brands** find creators by niche, platform, audience range, pool member count, location and language. They send a structured request and track it to a reply.
 - **Creators** receive vetted requests from verified brands in one place. They stay in control of what brands see and who can reach them. Their email stays private.
-- **Amped** gains a two-sided reason to join: creators get deal flow, brands get a discovery channel. Pool staker counts become a visible, verifiable signal that other link-in-bio products cannot show. The brand account is the identity item #8 will reuse for ads.
+- **Amped** gains a two-sided reason to join: creators get deal flow, brands get a discovery channel. Pool member counts become a visible, verifiable proof of community that other link-in-bio products cannot show. The brand account is the identity item #8 will reuse for ads. 90 days of accept-rate data set brand pricing.
 
 ### 2.2 In scope
 
@@ -70,7 +71,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 4. Collaboration request composer with templates and FTC disclosure acknowledgment.
 5. Creator inbox panel with accept, decline, block and report.
 6. Brand request pipeline with basic stats.
-7. Email notifications for new requests, accepts and a weekly creator digest.
+7. Email notifications for new requests and accepts. A weekly creator digest follows in Phase 2.
 8. Admin queues for brand review and reports.
 9. Abuse controls: quotas, rate limits, cooldowns, auto-pause.
 
@@ -96,7 +97,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
    - High: DNS TXT record required for every brand.
    - **Recommendation: Medium.** Manual review is cheap at launch volume and stops the worst actors. Revisit after 200 brands.
 3. **Pricing.** The market uses these models (list only):
-   - Free to search, fee per completed deal (Collabstr 10% or 5%, Passionfroot 2% or 15%). Requires payments, which are on hold.
+   - Free to search, fee per completed deal (Collabstr 10% or 5%, Passionfroot 5% or 15%). Requires payments, which are on hold.
    - Monthly subscription with metered credits (Modash from $199 per month, Collabstr Pro $249 per month).
    - Free for brands, funded by ads (TikTok One, YouTube BrandConnect, Instagram).
    - Pay per request credit packs.
@@ -112,7 +113,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 
 - **Access gating engine.** Portal permissions are role checks (brand member, creator owner, admin). They do not use `AccessRule`. A later phase can let a creator gate a media kit `ContentItem` with an `AccessRule` whose audience is "verified brands", evaluated by `checkAccess(viewer, resource)`. The viewer type needs a brand membership flag for that.
 - **Content system.** Brand-facing profile fields are not `ContentItem`s in v1.
-- **Broadcast.** The portal shows staker counts only. It never exposes the stakers audience, its members or its addresses.
+- **Broadcast.** The portal shows pool member counts only. It never exposes the stakers audience, its members or its addresses.
 - **Creator payments.** On hold. No field in this spec moves money.
 
 ### 2.6 Extension points for item #8 (brand ad unit)
@@ -135,25 +136,26 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 - The work email domain must equal the website's registrable domain. Free email domains are rejected with a clear message.
 - Two acknowledgments are required: Brand Terms (contact only through Amped, no copying of creator data) and FTC disclosure.
 - Step 3: automatic checks. The domain has MX records and the website returns HTTP 200. Optional DNS TXT record `amped-verify=<token>`.
-- Step 4: admin review. Status `PENDING_REVIEW` until approved. The brand can browse the explainer but not search.
+- Step 4: admin review. Status `PENDING_REVIEW` until approved. The target is a decision within 1 business day. The brand can browse the explainer but not search.
+- Signup copy says brands reach creators "through Amped". It never offers direct email access.
 
 **Screen 2. Creator search** (`/brands/discover`)
 
 ![Creator search](img/brand-portal-search.png)
 
 - Keyword search over name, handle, bio and niches.
-- Filters: niche, active platforms, audience range (self-reported), minimum pool stakers, country, language, open-to collaboration types.
+- Filters: niche, active platforms, audience range (self-reported), minimum pool members, country, language, open-to collaboration types.
 - "Verified by platform only" is shown disabled with a "Later" badge until section 3.4 ships.
 - Cards show only fields from section 3.3. Every audience figure shows its source badge.
 - A standing banner states that only opted-in creators appear and that audience sizes are self-reported.
-- Sort: best match (default), most pool stakers, recently active.
+- Sort: best match (default), most pool members, recently active.
 
 **Screen 3. Creator profile drawer** (`/brands/discover?creator=<handle>`)
 
 ![Creator profile drawer](img/brand-portal-drawer.png)
 
 - Bio text, niches, channels from public link blocks, self-reported audience per channel with its update date.
-- Creator pool: staker count and pool name, read from the chain. Hidden pools are not shown.
+- Creator pool: member count and pool name, read from the chain, with an "On-chain" badge. Hidden pools are not shown. No stake amount, token price or yield is shown.
 - Preferences: open to, not open to, past partners (typed by the creator).
 - Response record: shown after the creator has received at least 3 requests.
 - Actions: save to list, send collaboration request, report.
@@ -176,7 +178,7 @@ This spec covers brand accounts, creator discovery, collaboration requests and t
 - The "Open to brand collaborations" switch sits at the top. Turning it off removes the creator from search at once. Existing requests stay in the inbox.
 - Tabs: New, Accepted, Declined, Blocked.
 - Each request shows the brand name, logo, verified domain, type, deadline, subject and message.
-- Accept opens a sheet: optional business contact to share (defaults to empty, never pre-filled with the login email), and a required disclosure acknowledgment.
+- Accept opens a sheet: optional business contact to share (defaults to empty, never pre-filled with the login email), a required disclosure acknowledgment, and the notice that Amped does not process payments for collaborations.
 - Decline takes an optional reason: not a fit, timing, compensation, category, other.
 - Block brand and Report are on every request.
 
@@ -412,7 +414,7 @@ model CreatorSearchDoc {
   niches_text    String   @db.VarChar(255)
   country        String?  @db.Char(2)
   audience_max   Int      @default(-1) // highest bucket across platforms, -1 when none
-  stakers        Int      @default(0)
+  pool_members   Int      @default(0) // distinct stakers in the creator's visible pool
   collab_mask    Int      @default(0) // bit per CollabType
   accept_rate    Float?
   median_reply_h Int?
@@ -421,7 +423,7 @@ model CreatorSearchDoc {
 
   @@fulltext([name, handle, bio, niches_text])
   @@index([country])
-  @@index([stakers])
+  @@index([pool_members])
   @@index([audience_max])
   @@map("creator_search_docs")
 }
@@ -454,7 +456,7 @@ A brand sees only fields that are public on the bio or that the creator entered 
 | Platforms and profile URLs | Link and media blocks, public bio | Yes |
 | Niches, country, region, languages | `CreatorBrandProfile`, creator entered | Yes |
 | Audience per platform | `CreatorAudienceStat` | Yes, with source badge and update date. Hidden when older than 180 days. |
-| Pool stakers, pool name | `CreatorPool`, `StakedPool` | Count and name only. Hidden pools excluded. |
+| Pool member count, pool name | `CreatorPool`, `StakedPool` | Member count and name only. Hidden pools excluded. Never stake amounts, token price or yield. |
 | Open to, not open to, past partners | `CreatorBrandProfile` | Yes |
 | Response record | Computed from `CollaborationRequest` | After 3 or more requests received |
 | Email | `User.email` | **Never** |
@@ -468,13 +470,13 @@ A brand sees only fields that are public on the bio or that the creator entered 
 2. **Niches: fixed taxonomy.** About 24 niches in `CREATOR_NICHES`, creator picks up to 5. Free-text tags are not allowed. They fragment search and invite keyword stuffing.
 3. **Later: verified via official APIs.** Instagram Graph API (professional accounts), YouTube Data API, TikTok developer APIs, and X through Build Board item #4. The creator connects an account with OAuth. Amped stores the count with `source = PLATFORM_OAUTH` and `verified_at`. Tokens are not kept after the count is read unless a refresh schedule is approved.
 4. **Never: scraping.** No reading of third-party pages or unofficial APIs.
-5. **On-chain signal now.** Staker count is verifiable today and is Amped's differentiator. It is shown with an "On-chain" badge.
+5. **On-chain signal now.** Pool member count (distinct stakers) is verifiable today and is Amped's differentiator. It is shown with an "On-chain" badge. Brand-facing copy always calls it "members", never "stakers".
 
 ### 3.5 Search implementation
 
 **Eligibility.** A creator has a `CreatorSearchDoc` row only when all hold:
 
-- The SEO indexable rule: handle set, `block = "no"`, `email_verified = true`, description or at least one block. Call the shared function from the SEO spec. Do not copy it.
+- The SEO indexable rule: handle set, `block = "no"`, `email_verified = true`, description or at least one block. Call `indexableUserWhere` or `isUserIndexable` from `apps/server/src/utils/indexable.ts` (SEO PR #1). Do not copy it.
 - `open_to_brands = true` and `age_confirmed_at` set.
 - `paused_until` is null or in the past.
 - The creator has not hit `weekly_request_cap` in the current week.
@@ -494,9 +496,9 @@ Blocks (`CreatorBrandBlock`) and category exclusions are applied at query time f
 
 - `MATCH(name, handle, bio, niches_text) AGAINST (? IN BOOLEAN MODE)` when a keyword is present. Input is sanitized to words and quoted phrases.
 - Facet filters as `EXISTS` subqueries on `CreatorSearchFacet`.
-- Numeric filters on `stakers`, `audience_max`, `collab_mask`, `country`.
+- Numeric filters on `pool_members`, `audience_max`, `collab_mask`, `country`.
 - Exclude creators who blocked the brand. Exclude creators whose `excluded` facets contain the brand's industry category.
-- Sort by relevance, then `stakers`, then `last_active_at`. Cursor pagination, 24 per page, 20 pages maximum.
+- Sort by relevance, then `pool_members`, then `last_active_at`. Cursor pagination, 24 per page, 20 pages maximum.
 
 **Indexing pipeline.** A single `reindexCreator(userId)` in `apps/server/src/services/creatorSearchIndex.ts` rebuilds or deletes one row and its facets. It runs:
 
@@ -541,7 +543,7 @@ All inputs and outputs use zod schemas from `packages/constants`. Output schemas
 | `audience.set` / `audience.remove` | mutation | Self-reported range per platform. |
 | `inbox.list` | query | Requests by status. |
 | `inbox.get` | query | One request. Sets `VIEWED` and `viewed_at` on first open. |
-| `inbox.accept` | mutation | Requires `disclosureAck: true`. Optional `sharedContact`. Sends accept emails with the FTC reminder to both sides. |
+| `inbox.accept` | mutation | Requires `disclosureAck: true`. Optional `sharedContact`. Sends accept emails to both sides with the FTC reminder and the payments notice. |
 | `inbox.decline` | mutation | Optional reason from `DECLINE_REASONS`. |
 | `brands.block` / `brands.unblock` / `brands.listBlocked` | mutation / query | Block list. |
 | `report` | mutation | Report a brand or request. |
@@ -598,8 +600,8 @@ A brand member with no handle lands on `/brands` after login instead of the edit
 
 **Creator email and private data**
 
-- The `getHandle` email exposure must be fixed first (finding 1).
-- No brand-facing output schema contains an email field. A test serializes every brand-side procedure's output and fails on any key named `email`.
+- The `getHandle` email exposure (D1) must be fixed first (finding 1). No marketing for the portal goes out before the fix is deployed.
+- No brand-facing output schema contains an email field. A test serializes every brand-side procedure's output and fails the build on any key named `email`, any email-shaped value, or any wallet address (`0x` plus 40 hex characters).
 - `shared_contact` is entered by the creator on accept and is never pre-filled from `User.email`.
 - Authorization uses `ctx.brand.id` on every brand query to prevent access to another brand's requests.
 
@@ -620,33 +622,73 @@ A brand member with no handle lands on `/brands` after login instead of the edit
 - The FTC requires creators to disclose any material connection, including free products, clearly and in the post itself. Brands are also responsible for the endorsements they arrange.
 - The portal reminds both sides at four points: brand signup, the composer, the creator accept sheet, and the accept email to both parties.
 - Templates include disclosure wording such as "#ad", "Paid partnership" and "Gifted by [brand]".
-- Amped does not review posts and does not certify compliance. The copy says so.
+- Amped does not review posts and does not certify compliance. The copy says so. No copy calls a deal "FTC compliant".
+
+**Securities**
+
+- Pool size appears only as a member count. Brand-facing outputs never include stake amounts, total staked, token price, market cap, yield, APY or returns.
+- The member count is never shown next to a price, yield or APY figure.
 
 **Other**
 
-- No scraping of third-party platforms. Audience data is self-reported until official OAuth integrations ship.
+- No scraping of third-party platforms. Audience data is self-reported until official OAuth integrations ship. No copy implies follower counts come from anywhere other than the creator or official APIs.
 - Staker identities and wallet addresses never reach the portal.
-- Token and trading promotions follow decision 5. Creators exclude the category by default.
+- Token and trading promotions follow decision 5. Creators exclude the category by default. No copy presents the portal as a channel for token promotion.
+- Only creators who attest they are 18+ can opt in.
+- Amped does not process collaboration payments.
 - All raw SQL uses bound parameters.
+
+**Copy rules (product and marketing)**
+
+One list applies to the portal UI, brand and creator emails, the `/i/brands` explainer and all launch marketing.
+
+- **Banned words** when describing pools to brands: returns, yield, APY, earn, profit, investment, price, and "stakers" as a financial metric.
+- **Approved alternatives:** community size, members, on-chain verified member count, engaged community.
+- **Contact:** say "contact through Amped". Never promise brands "direct email access".
+- **Consent:** say "opt in" and "you control what brands see".
+- **Audience numbers:** always show the source label. Never call a self-reported figure "verified".
+- **Required disclaimers:**
+  - "Amped does not process payments for collaborations." Shown in the composer, the accept sheet, both accept emails and the explainer.
+  - "Amped does not review posts or certify FTC compliance." Shown with every FTC reminder.
+  - "Only creators who opted in appear here. Audience sizes are self-reported unless marked otherwise." Standing banner on search.
+- **Required disclosures:** FTC reminders at brand signup, the composer, the accept sheet and the accept emails. "Viewed" status disclosed to creators at opt-in.
+- UI strings and email templates for the portal live in `packages/constants/src/brand-portal.ts` and the email template folder. A test fails the build if any of them contains a banned word or "stakers" (whole word, case-insensitive).
 
 ### 3.10 Analytics events
 
 Server-side events, with brand and creator ids hashed in any third-party tool. GA wiring belongs to Build Board item #11.
 
+Every event carries `ts` and, where it applies, `brand_id_hash`, `creator_id_hash` and `request_id_hash`. Events fire after the database write commits.
+
 | Event | Properties |
 |---|---|
 | `brand_signup_started` / `brand_signup_submitted` | industry, country, is_agency |
-| `brand_verified` | method (review, dns) |
+| `brand_verified` | method (review, dns), hours_in_review |
+| `brand_rejected` / `brand_auto_paused` | reason |
 | `brand_search` | filter keys used, result count, page |
 | `brand_creator_viewed` | from (card, link) |
 | `brand_creator_saved` | list |
 | `brand_request_sent` | type, quota remaining |
-| `brand_request_viewed` / `brand_request_accepted` / `brand_request_declined` / `brand_request_expired` | type, hours since sent, decline reason |
+| `brand_request_viewed` / `brand_request_accepted` / `brand_request_declined` / `brand_request_expired` / `brand_request_withdrawn` | type, hours_since_sent, decline reason |
 | `creator_brand_optin` / `creator_brand_optout` | profile completeness |
-| `creator_brand_blocked` / `brand_reported` | reason |
+| `creator_brand_blocked` | reason |
+| `brand_reported` | reason, target (brand, request) |
 | `brand_rate_limited` | limit name |
 
 Core metrics: opted-in creators, active brands, requests per brand per month, view rate, accept rate, median time to reply, reports per 100 requests.
+
+**KPI to event or source.** Targets come from the business overview and are proposed. The 90-day window starts on the Phase 1 launch date.
+
+| KPI (90-day target) | Event or source | Calculation |
+|---|---|---|
+| Opted-in creators (200) | `CreatorBrandProfile`, cross-checked with `creator_brand_optin` and `creator_brand_optout` | Rows with `open_to_brands = true` and `age_confirmed_at` set, on day 90. |
+| Active brands (20) | `brand_request_sent` | Distinct `brand_id_hash` with at least one event in the window. |
+| Accept rate of answered requests (above 20%) | `brand_request_accepted`, `brand_request_declined` | Accepted divided by accepted plus declined. Expired and withdrawn are excluded. |
+| Reports per 100 requests (under 2) | `brand_reported`, `brand_request_sent` | Reports divided by requests sent, times 100. |
+| Median time to creator reply (under 72 hours) | `brand_request_accepted`, `brand_request_declined` | Median `hours_since_sent`. |
+| Requests per active brand per month (8) | `brand_request_sent` | Requests per `brand_id_hash` per calendar month, averaged over active brands. |
+
+The admin dashboard computes the same figures from `CollaborationRequest`, `BrandReport` and `CreatorBrandProfile`, so the KPIs hold even before item #11 wires a third-party tool.
 
 ### 3.11 Acceptance criteria
 
@@ -664,15 +706,23 @@ Core metrics: opted-in creators, active brands, requests per brand per month, vi
 12. Every audience figure in the UI shows its source badge. Figures older than 180 days are hidden.
 13. The inbox panel renders correctly at 390 px width.
 14. `pnpm run typecheck` passes for server and client. `pnpm run build` passes for client, server and landingpage.
+15. A new creator profile has the crypto and trading category in `excluded_categories` by default.
+16. A creator at `weekly_request_cap` does not appear in search until the week resets. Pause offers 1, 2 and 4 weeks.
+17. No brand-facing response contains stake amounts, total staked, token price or yield. Pool data is a member count and a pool name.
+18. Brand-facing UI shows "members", never "stakers". The copy test in section 3.9 passes for all portal strings and email templates.
+19. The payments notice appears in the composer, the accept sheet, both accept emails and the explainer.
+20. Every event in section 3.10 fires once per action with the listed properties. Each KPI in the mapping table can be computed for a test month from events and from the admin dashboard.
 
 ### 3.12 Phased rollout
 
-| Phase | Scope | Gate to next phase |
-|---|---|---|
-| 0. Prerequisites | Fix `getHandle` email exposure. Ship the SEO indexable function. Add `/i/brands` explainer and a creator waitlist switch. | Email fix deployed and verified. |
-| 1. Private beta | Creator opt-in and profile. Brand signup with manual review. Search, drawer, composer, inbox, pipeline. Accept with shared contact (decision 4, option A). Quotas and rate limits. 20 invited brands. | 200 opted-in creators. Accept rate above 20%. Report rate under 2 per 100 requests. |
-| 2. Open beta | Open brand signup. In-app thread (option B). Team members. Weekly creator digest. DNS verification badge. | 90 days of data for the pricing decision. |
-| 3. Growth | Verified audience via platform OAuth and X (item #4). Campaign listings that creators apply to. Paid brand plans if approved. Brand ad unit (item #8) on the same `BrandAccount`. | Separate specs. |
+Timing follows the business overview. All dates are proposed.
+
+| Phase | Timing | Scope | Gate to next phase |
+|---|---|---|---|
+| 0. Prerequisites | October to November 2026 (proposed) | Fix `getHandle` email exposure (D1). This is the blocker. Ship the SEO indexable function (SEO PR #1). Add `/i/brands` explainer and a creator waitlist switch. Counsel reviews the Brand Terms. Line up 20 beta brands. No portal marketing before the D1 fix. | Email fix deployed and verified. Brand Terms approved by counsel. |
+| 1. Private beta | December 2026 (proposed) | Creator opt-in and profile. Brand signup with manual review. Search, drawer, composer, inbox, pipeline. Accept with shared contact (decision 4, option A). Quotas and rate limits. 20 invited brands. | 200 opted-in creators. Accept rate above 20%. Report rate under 2 per 100 requests. |
+| 2. Open beta | First quarter 2027, once the Phase 1 gate is met (proposed) | Open brand signup. In-app thread (option B). Team members. Weekly creator digest. DNS verification badge. | 90 days of data for the pricing decision. |
+| 3. Growth | Not scheduled | Verified audience via platform OAuth and X (item #4). Campaign listings that creators apply to. Paid brand plans if approved. Brand ad unit (item #8) on the same `BrandAccount`. | Separate specs. |
 
 ## Sources
 
@@ -693,3 +743,7 @@ Core metrics: opted-in creators, active brands, requests per brand per month, vi
 - GDPR Article 6, Lawfulness of processing: https://gdpr-info.eu/art-6-gdpr/
 - GDPR Article 7, Conditions for consent: https://gdpr-info.eu/art-7-gdpr/
 - California Attorney General, CCPA: https://oag.ca.gov/privacy/ccpa
+
+## Revision log
+
+2026-09-26: aligned with business overview (added overview link; corrected Passionfroot fees to 5% and 15%; renamed stakers to pool members in UI, search doc and copy; moved the weekly digest to Phase 2; added the securities rules and one banned-word list with approved alternatives and required disclaimers; added payments notices to the accept flow; extended the privacy test to wallet addresses; added event ids, new events and a KPI mapping table; added acceptance criteria 15 to 20; added proposed dates, counsel review and beta brand outreach to the rollout).

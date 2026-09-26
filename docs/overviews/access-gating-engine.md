@@ -29,7 +29,7 @@ Access gating lets a creator lock any link, media or text on their bio so only m
 
 - One audited system decides every gate across the product.
 - Locked destinations never appear in page source, search results, share previews or site maps.
-- Every open is checked, and each pass expires after 10 minutes, so shared links stop working.
+- Every open is checked against current membership, and each pass expires after 10 minutes. A copied Amped link still re-checks the person who opens it. After the redirect, a fan can see the final destination URL, so creators who need tighter control use hosted content.
 - Paid access connects to the same engine when Rob's payments work in the Revolution Network project ships.
 
 ## How it works
@@ -43,7 +43,7 @@ Access gating lets a creator lock any link, media or text on their bio so only m
 7. If not, the sheet shows their stake, the level, a risk disclosure and a link to the pool page.
 8. Every attempt is logged, and the creator sees the totals on the rules page.
 
-Under the hood, the engine checks membership on chain at the moment of opening, not from a stored copy. A passing check becomes a short pass tied to that fan, that item and that version of the rule. If the chain cannot be reached, items stay locked. A fan who unstakes outside Amped loses access within about 11 minutes.
+Under the hood, the engine checks membership on chain at the moment of opening, not from a stored copy. A passing check becomes a short pass tied to that fan, that item and that version of the rule. If the chain cannot be reached, items stay locked. A fan who unstakes outside Amped is refused on new opens within about 11 minutes. A video already playing can run until its stream token expires.
 
 ## Competition
 
