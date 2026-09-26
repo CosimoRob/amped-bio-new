@@ -1,0 +1,164 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Content Library</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef1fd;color:#1a1d29;font-size:14px}
+.app{display:flex;min-height:900px}
+.side{width:84px;background:#fff;border-right:1px solid #e3e7f5;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4063e8,#8a5cf6);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.nav{width:64px;padding:8px 0;border-radius:12px;text-align:center;font-size:11px;color:#667}
+.nav i{display:block;width:22px;height:22px;margin:0 auto 4px;border-radius:6px;background:#dfe4f6}
+.nav.on{background:#eef1fd;color:#4063e8;font-weight:600}
+.nav.on i{background:#4063e8}
+.main{flex:1;padding:28px 36px;min-width:0}
+h1{font-size:24px;font-weight:700}
+.sub{color:#667;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;border:1px solid #d5dbf0;background:#fff;color:#1a1d29;font-size:14px}
+.btn.pri{background:#4063e8;color:#fff;border-color:#4063e8}
+.card{background:#fff;border:1px solid #e3e7f5;border-radius:16px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-pub{background:#e3f7ec;color:#137a45}
+.p-gate{background:#efe8ff;color:#6b3fd6}
+.p-proc{background:#fff4dc;color:#9a6200}
+.p-draft{background:#eceef4;color:#555}
+.p-rev{background:#ffe5e5;color:#b42323}
+.muted{color:#778}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.row{display:flex;gap:10px;align-items:center}
+.filters{display:flex;gap:8px;margin:22px 0 18px;align-items:center}
+.chip{padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #dfe4f6;font-size:13px}
+.chip.on{background:#1a1d29;color:#fff;border-color:#1a1d29}
+.search{margin-left:auto;width:260px;padding:9px 14px;border-radius:10px;border:1px solid #dfe4f6;background:#fff;color:#99a}
+.layout{display:flex;gap:24px}
+.grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.item{overflow:hidden}
+.th{height:120px;position:relative}
+.kind{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;letter-spacing:.5px}
+.lk{position:absolute;right:10px;top:10px;background:#fff;color:#6b3fd6;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px}
+.pbar{position:absolute;left:10px;right:10px;bottom:10px;height:6px;background:rgba(255,255,255,.4);border-radius:4px}
+.pbar span{display:block;height:6px;background:#fff;border-radius:4px}
+.ib{padding:12px 14px 14px}
+.it{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.im{display:flex;justify-content:space-between;font-size:12px;margin-top:4px}
+.aside{width:280px;display:flex;flex-direction:column;gap:16px}
+.meter{padding:18px}
+.mbar{height:10px;border-radius:6px;background:#eceef4;display:flex;overflow:hidden;margin:12px 0 10px}
+.leg{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.leg div{display:flex;justify-content:space-between}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.note{padding:16px;font-size:13px;line-height:1.5}
+</style></head><body>
+<div class="app">
+<div class="side">
+  <div class="logo">A</div>
+  <div class="nav"><i></i>Home</div>
+  <div class="nav"><i></i>Profile</div>
+  <div class="nav"><i></i>Themes</div>
+  <div class="nav"><i></i>Blocks</div>
+  <div class="nav on"><i></i>Content</div>
+  <div class="nav"><i></i>My Pool</div>
+  <div class="nav"><i></i>Wallet</div>
+</div>
+
+<div class="main">
+  <div class="top">
+    <div><h1>Content</h1><div class="sub">Upload once. Place it in your bio, gate it, or attach it to a broadcast.</div></div>
+    <div class="row"><span class="btn">New collection</span><span class="btn pri">+ Upload</span></div>
+  </div>
+  <div class="filters">
+    <span class="chip on">All 24</span><span class="chip">Video 7</span><span class="chip">Audio 6</span>
+    <span class="chip">Images 5</span><span class="chip">Documents 4</span><span class="chip">Files 2</span>
+    <span class="chip">Gated 9</span><span class="chip">Drafts 3</span>
+    <span class="search">Search your content</span>
+  </div>
+  <div class="layout">
+    <div class="grid">
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#5b7cfa,#8a5cf6)"><span class="kind">VIDEO</span></div>
+      <div class="ib">
+        <div class="it">Studio session, part 1</div>
+        <div class="im"><span class="muted">12:48</span><span class="muted">2.1k views</span></div>
+        <div style="margin-top:8px"><span class="pill p-pub">Public</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#f6a04d,#e2557a)"><span class="kind">AUDIO</span><div class="lk">LOCK</div></div>
+      <div class="ib">
+        <div class="it">Demo: Night Drive</div>
+        <div class="im"><span class="muted">3:21</span><span class="muted">412 plays</span></div>
+        <div style="margin-top:8px"><span class="pill p-gate">Stakers 500+</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#29b3a3,#2f7de1)"><span class="kind">PDF</span><div class="lk">LOCK</div></div>
+      <div class="ib">
+        <div class="it">Mix and master checklist</div>
+        <div class="im"><span class="muted">14 pages</span><span class="muted">188 opens</span></div>
+        <div style="margin-top:8px"><span class="pill p-gate">Pool members</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#e45d8f,#7c4dff)"><span class="kind">IMAGE</span></div>
+      <div class="ib">
+        <div class="it">Tour poster set</div>
+        <div class="im"><span class="muted">6 images</span><span class="muted">960 views</span></div>
+        <div style="margin-top:8px"><span class="pill p-pub">Public</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#9aa3b8,#6b7488)"><span class="kind">VIDEO</span><div class="pbar"><span style="width:64%"></span></div></div>
+      <div class="ib">
+        <div class="it">Behind the scenes, Lisbon</div>
+        <div class="im"><span class="muted">Processing 64%</span><span class="muted"></span></div>
+        <div style="margin-top:8px"><span class="pill p-proc">Processing</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#3a4256,#1f2433)"><span class="kind">FILE</span></div>
+      <div class="ib">
+        <div class="it">Sample pack vol. 2 (ZIP)</div>
+        <div class="im"><span class="muted">182 MB</span><span class="muted"></span></div>
+        <div style="margin-top:8px"><span class="pill p-draft">Draft</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#4ec7f0,#4063e8)"><span class="kind">AUDIO</span><div class="lk">LOCK</div></div>
+      <div class="ib">
+        <div class="it">Voice memo: chorus idea</div>
+        <div class="im"><span class="muted">0:48</span><span class="muted">97 plays</span></div>
+        <div style="margin-top:8px"><span class="pill p-gate">Stakers 100+</span></div>
+      </div>
+    </div>
+    <div class="card item">
+      <div class="th" style="background:linear-gradient(135deg,#c8ccd8,#a2a8b8)"><span class="kind">VIDEO</span></div>
+      <div class="ib">
+        <div class="it">Fan Q and A replay</div>
+        <div class="im"><span class="muted">Held for review</span><span class="muted"></span></div>
+        <div style="margin-top:8px"><span class="pill p-rev">In review</span></div>
+      </div>
+    </div></div>
+    <div class="aside">
+      <div class="card meter">
+        <div style="font-weight:700">Storage</div>
+        <div class="muted" style="font-size:13px;margin-top:2px">3.4 GB of 5 GB used</div>
+        <div class="mbar"><span style="width:44%;background:#4063e8"></span><span style="width:14%;background:#f6a04d"></span><span style="width:6%;background:#29b3a3"></span><span style="width:4%;background:#8a5cf6"></span></div>
+        <div class="leg">
+          <div><span><span class="dot" style="background:#4063e8"></span>Video</span><span>2.2 GB</span></div>
+          <div><span><span class="dot" style="background:#f6a04d"></span>Audio</span><span>0.7 GB</span></div>
+          <div><span><span class="dot" style="background:#29b3a3"></span>Documents</span><span>0.3 GB</span></div>
+          <div><span><span class="dot" style="background:#8a5cf6"></span>Images and files</span><span>0.2 GB</span></div>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:12px">Video minutes: 94 of 300</div>
+      </div>
+      <div class="card note">
+        <div style="font-weight:700;margin-bottom:6px">Review queue</div>
+        One item is held for review. Items stay private until checks pass. You get a notice with the reason if an item is blocked.
+      </div>
+      <div class="card note">
+        <div style="font-weight:700;margin-bottom:6px">Gating</div>
+        9 items use access rules. Fans unlock them by staking in your pool or joining it.
+      </div>
+    </div>
+  </div>
+</div></div>
+</body></html>

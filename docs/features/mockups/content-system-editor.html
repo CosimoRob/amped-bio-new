@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Content Editor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef1fd;color:#1a1d29;font-size:14px}
+.app{display:flex;min-height:900px}
+.side{width:84px;background:#fff;border-right:1px solid #e3e7f5;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4063e8,#8a5cf6);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.nav{width:64px;padding:8px 0;border-radius:12px;text-align:center;font-size:11px;color:#667}
+.nav i{display:block;width:22px;height:22px;margin:0 auto 4px;border-radius:6px;background:#dfe4f6}
+.nav.on{background:#eef1fd;color:#4063e8;font-weight:600}
+.nav.on i{background:#4063e8}
+.main{flex:1;padding:28px 36px;min-width:0}
+h1{font-size:24px;font-weight:700}
+.sub{color:#667;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;border:1px solid #d5dbf0;background:#fff;color:#1a1d29;font-size:14px}
+.btn.pri{background:#4063e8;color:#fff;border-color:#4063e8}
+.card{background:#fff;border:1px solid #e3e7f5;border-radius:16px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-pub{background:#e3f7ec;color:#137a45}
+.p-gate{background:#efe8ff;color:#6b3fd6}
+.p-proc{background:#fff4dc;color:#9a6200}
+.p-draft{background:#eceef4;color:#555}
+.p-rev{background:#ffe5e5;color:#b42323}
+.muted{color:#778}
+
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;margin-top:20px}
+.pane{padding:22px}
+label{display:block;font-size:12px;font-weight:600;color:#556;margin:14px 0 6px}
+.inp{border:1px solid #d5dbf0;border-radius:10px;padding:10px 12px;background:#fff}
+.ta{height:84px;color:#334;line-height:1.5}
+.prev{height:220px;border-radius:12px;background:linear-gradient(135deg,#f6a04d,#e2557a);position:relative}
+.wave{position:absolute;left:24px;right:24px;bottom:40px;height:60px;display:flex;align-items:flex-end;gap:4px}
+.wave span{flex:1;background:rgba(255,255,255,.75);border-radius:2px}
+.vis{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid #d5dbf0;border-radius:12px;padding:14px}
+.opt.on{border:2px solid #4063e8;background:#f5f7ff}
+.rad{width:18px;height:18px;border-radius:50%;border:2px solid #b9c3ec;flex-shrink:0;margin-top:1px}
+.opt.on .rad{border:5px solid #4063e8}
+.rule{margin:10px 0 0 30px;border:1px solid #e3e7f5;border-radius:12px;padding:12px;background:#fff}
+.rr{display:flex;align-items:center;gap:10px;padding:8px 0}
+.rr+.rr{border-top:1px solid #f0f2f8}
+.ck{width:16px;height:16px;border-radius:4px;border:2px solid #b9c3ec}
+.ck.on{background:#4063e8;border-color:#4063e8}
+.soon{font-size:10px;font-weight:700;color:#888;background:#eceef4;padding:2px 6px;border-radius:5px;margin-left:auto}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.warn{display:flex;gap:10px;background:#fff8e6;border:1px solid #f2d58c;border-radius:10px;padding:10px 12px;font-size:12px;color:#6b5100;line-height:1.45;margin-top:12px}
+.wi{width:16px;height:16px;border-radius:50%;background:#e0a100;flex-shrink:0;margin-top:1px}
+</style></head><body>
+<div class="app">
+<div class="side">
+  <div class="logo">A</div>
+  <div class="nav"><i></i>Home</div>
+  <div class="nav"><i></i>Profile</div>
+  <div class="nav"><i></i>Themes</div>
+  <div class="nav"><i></i>Blocks</div>
+  <div class="nav on"><i></i>Content</div>
+  <div class="nav"><i></i>My Pool</div>
+  <div class="nav"><i></i>Wallet</div>
+</div>
+
+<div class="main">
+  <div class="muted" style="font-size:13px">Content / Demo: Night Drive</div>
+  <h1 style="margin-top:4px">Edit item</h1>
+  <div class="grid2">
+    <div class="card pane">
+      <div class="prev"><span class="pill" style="position:absolute;left:14px;top:14px;background:rgba(0,0,0,.5);color:#fff">AUDIO 3:21</span><div class="wave"><span style="height:30%"></span><span style="height:55%"></span><span style="height:40%"></span><span style="height:80%"></span><span style="height:65%"></span><span style="height:90%"></span><span style="height:45%"></span><span style="height:70%"></span><span style="height:35%"></span><span style="height:60%"></span><span style="height:85%"></span><span style="height:50%"></span><span style="height:75%"></span><span style="height:40%"></span><span style="height:95%"></span><span style="height:60%"></span><span style="height:45%"></span><span style="height:70%"></span><span style="height:30%"></span><span style="height:55%"></span><span style="height:80%"></span><span style="height:50%"></span><span style="height:65%"></span><span style="height:40%"></span><span style="height:70%"></span><span style="height:35%"></span><span style="height:60%"></span><span style="height:45%"></span><span style="height:85%"></span><span style="height:55%"></span></div></div>
+      <label>Title</label><div class="inp">Demo: Night Drive</div>
+      <label>Description</label><div class="inp ta">First pass of the new single. Recorded in one take at the Lisbon studio. Stakers hear it two weeks before release.</div>
+      <label>Cover image</label>
+      <div style="display:flex;gap:10px;align-items:center"><div style="width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,#f6a04d,#e2557a)"></div><span class="btn" style="padding:7px 12px;font-size:13px">Replace</span><span class="muted" style="font-size:12px">Shown blurred to fans who have not unlocked</span></div>
+      <label>Downloads</label>
+      <div style="display:flex;gap:10px;align-items:center"><div class="ck"></div><span>Allow fans with access to download the original file</span></div>
+    </div>
+    <div class="card pane">
+      <div style="font-weight:700;font-size:16px">Visibility</div>
+      <div class="vis">
+        <div class="opt"><div class="rad"></div><div><b>Public</b><div class="muted" style="font-size:13px">Anyone with your bio link can view.</div></div></div>
+        <div class="opt on"><div class="rad"></div><div><b>Gated</b><div class="muted" style="font-size:13px">Fans who meet the rule open it. Others see a preview.</div></div></div>
+      </div>
+      <div class="rule">
+        <div style="font-size:12px;font-weight:600;color:#556;margin-bottom:6px">Access rule</div>
+        <div class="rr" style="border:2px solid #4063e8;border-radius:10px;padding:10px;background:#f5f7ff"><div class="rad" style="border:5px solid #4063e8"></div><div><b>Inner circle</b><div class="muted" style="font-size:12px">Members with 500 REVO staked. Used by 6 items.</div></div></div>
+        <div class="rr" style="padding:10px"><div class="rad"></div><div><b>Pool members</b><div class="muted" style="font-size:12px">Anyone who has joined my pool. Used by 3 items.</div></div></div>
+        <div class="rr" style="padding:10px"><div style="color:#4063e8;font-weight:600">+ New rule</div><span class="soon">Reward points, followers and paid: LATER</span></div>
+      </div>
+      <div class="warn"><div class="wi"></div><div>Gated access reflects participation in your pool. Do not describe staking as an investment or promise returns. Content access is a membership benefit, not a financial product.</div></div>
+      <label>Preview for locked fans</label>
+      <div class="inp">First 30 seconds</div>
+      <div class="foot"><span class="pill p-gate">Gated: Inner circle</span><div style="display:flex;gap:10px"><span class="btn">Save draft</span><span class="btn pri">Publish</span></div></div>
+    </div>
+  </div>
+</div></div>
+</body></html>

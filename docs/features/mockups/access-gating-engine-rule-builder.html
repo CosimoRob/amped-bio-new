@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Rule builder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f5f8;color:#111827;font-size:14px}
+.top{height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 24px;gap:16px}
+.logo{font-weight:800;font-size:18px;color:#4f46e5}
+.tab{color:#6b7280;padding:6px 10px;border-radius:6px}
+.tab.on{background:#eef2ff;color:#4338ca;font-weight:600}
+.wrap{display:grid;grid-template-columns:420px 1fr 470px;height:844px}
+.col{padding:24px;overflow:hidden}
+.left{border-right:1px solid #e5e7eb;background:#fff}
+h2{font-size:15px;font-weight:700;margin-bottom:14px}
+.block{border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;background:#fff}
+.block.sel{border:2px solid #4f46e5;box-shadow:0 0 0 4px #eef2ff}
+.ic{width:30px;height:30px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px}
+.bt{flex:1}
+.bt b{display:block;font-size:14px}
+.bt span{font-size:12px;color:#6b7280}
+.chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;white-space:nowrap}
+.chip.g{background:#ecfdf5;color:#047857}
+.preview{display:flex;justify-content:center;padding-top:24px}
+.phone{width:320px;height:640px;border-radius:36px;background:linear-gradient(160deg,#1e1b4b,#4c1d95);padding:28px 18px;color:#fff;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.av{width:64px;height:64px;border-radius:50%;background:#c4b5fd;margin:0 auto 8px}
+.nm{text-align:center;font-weight:700}
+.hd{text-align:center;font-size:12px;opacity:.7;margin-bottom:18px}
+.pl{background:rgba(255,255,255,.12);border-radius:12px;padding:12px;margin-bottom:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.pl.lk{border:1px dashed rgba(255,255,255,.5)}
+.right{background:#fff;border-left:1px solid #e5e7eb}
+.lbl{font-size:12px;font-weight:600;color:#374151;margin:16px 0 8px}
+.opt{border:1px solid #e5e7eb;border-radius:10px;padding:11px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.opt.on{border:2px solid #4f46e5;background:#f5f7ff}
+.opt.off{opacity:.55}
+.rd{width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af;margin-top:2px;flex-shrink:0}
+.opt.on .rd{border:5px solid #4f46e5}
+.ot b{display:block;font-size:13px}
+.ot span{font-size:12px;color:#6b7280}
+.soon{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#f3f4f6;color:#6b7280;white-space:nowrap}
+.hold{background:#fff7ed;color:#c2410c}
+.row{display:flex;gap:8px}
+.in{flex:1;border:1px solid #d1d5db;border-radius:8px;padding:9px 10px;font-size:13px;background:#fff}
+.in.sm{flex:0 0 90px;text-align:center;background:#f9fafb;color:#6b7280}
+.note{margin-top:14px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;padding:10px 12px;font-size:12px;color:#92400e;display:flex;gap:8px}
+.sum{margin-top:12px;border-radius:10px;background:#f9fafb;border:1px solid #e5e7eb;padding:10px 12px;font-size:12px;color:#374151}
+.btns{display:flex;gap:8px;margin-top:16px}
+.b{padding:10px 16px;border-radius:8px;font-weight:600;font-size:13px;border:1px solid #d1d5db;background:#fff}
+.b.p{background:#4f46e5;color:#fff;border-color:#4f46e5;flex:1;text-align:center}
+</style></head><body>
+<div class="top"><span class="logo">Amped.Bio</span><span class="tab on">Blocks</span><span class="tab">Theme</span><span class="tab">Pool</span><span class="tab">Access rules</span><span style="margin-left:auto;color:#6b7280">@maya.makes</span></div>
+<div class="wrap">
+ <div class="col left">
+  <h2>Your blocks</h2>
+  <div class="block"><div class="ic">&#9679;</div><div class="bt"><b>Latest video</b><span>YouTube link</span></div><span class="chip g">Everyone</span></div>
+  <div class="block sel"><div class="ic">&#128274;</div><div class="bt"><b>Studio session files</b><span>Custom link</span></div><span class="chip">500 REVO stake</span></div>
+  <div class="block"><div class="ic">&#128274;</div><div class="bt"><b>Members Discord</b><span>Discord link</span></div><span class="chip">Pool members</span></div>
+  <div class="block"><div class="ic">T</div><div class="bt"><b>About me</b><span>Text</span></div><span class="chip g">Everyone</span></div>
+  <div class="block"><div class="ic">&#9673;</div><div class="bt"><b>My creator pool</b><span>Pool</span></div><span class="chip g">Everyone</span></div>
+ </div>
+ <div class="col"><h2>Preview as a visitor without access</h2>
+  <div class="preview"><div class="phone">
+   <div class="av"></div><div class="nm">Maya Makes</div><div class="hd">@maya.makes</div>
+   <div class="pl"><span>Latest video</span><span>&#8599;</span></div>
+   <div class="pl lk"><span>&#128274; Studio session files</span><span style="font-size:11px;opacity:.8">Unlock</span></div>
+   <div class="pl lk"><span>&#128274; Members Discord</span><span style="font-size:11px;opacity:.8">Unlock</span></div>
+   <div class="pl"><span>About me</span><span></span></div>
+  </div></div>
+ </div>
+ <div class="col right">
+  <h2>Who can open this?</h2>
+  <div style="font-size:12px;color:#6b7280">Studio session files. The link address stays hidden until access is confirmed.</div>
+  <div class="lbl">Access</div>
+  <div class="opt"><div class="rd"></div><div class="ot"><b>Everyone</b><span>Anyone who visits your bio.</span></div></div>
+  <div class="opt"><div class="rd"></div><div class="ot"><b>Pool members</b><span>Fans who hold a stake in your pool.</span></div></div>
+  <div class="opt on"><div class="rd"></div><div class="ot"><b>Members with a minimum stake</b><span>Fans whose stake in your pool meets a level you set.</span></div></div>
+  <div class="opt off"><div class="rd"></div><div class="ot"><b>Paid access</b><span>One time purchase.</span></div><span class="soon hold">On hold</span></div>
+  <div class="opt off"><div class="rd"></div><div class="ot"><b>Reward points</b><span>Fans with enough points.</span></div><span class="soon">Later</span></div>
+  <div class="opt off"><div class="rd"></div><div class="ot"><b>Followers</b><span>Fans who follow you.</span></div><span class="soon">Later</span></div>
+  <div class="lbl">Minimum stake in Maya Makes Pool</div>
+  <div class="row"><div class="in">500</div><div class="in sm">REVO</div></div>
+  <div class="sum">Saved as rule <b>Inner circle</b>. Also used by 0 other items. 41 current members meet this level.</div>
+  <div class="note"><span>&#9888;</span><span>This is membership access to your content. Do not describe it as a return, yield or reward for staking.</span></div>
+  <div class="btns"><div class="b">Cancel</div><div class="b p">Save access rule</div></div>
+ </div>
+</div>
+</body></html>

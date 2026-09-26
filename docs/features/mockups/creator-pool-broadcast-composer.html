@@ -1,0 +1,102 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Broadcast composer</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f9fafb;color:#111827;font-size:14px;line-height:1.45}
+.row{display:flex;align-items:center}
+.muted{color:#6b7280}
+.small{font-size:12px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px;border:1px solid #e5e7eb;background:#fff;color:#374151}
+.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.btn.amber{background:#d97706;border-color:#d97706;color:#fff}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;white-space:nowrap}
+.chip.g{background:#f0fdf4;color:#15803d}
+.chip.gray{background:#f3f4f6;color:#4b5563}
+.chip.a{background:#fffbeb;color:#b45309}
+.av{border-radius:50%;background:linear-gradient(135deg,#f472b6,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+
+.app{display:flex;min-height:900px}
+.side{width:80px;background:#fff;border-right:1px solid #e5e7eb;padding:24px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.nav{width:48px;height:48px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6b7280;font-size:10px;gap:3px;position:relative}
+.nav.on{background:#eff6ff;color:#2563eb}
+.nav .dot{position:absolute;top:6px;right:9px;width:7px;height:7px;border-radius:50%;background:#2563eb}
+.main{flex:1;padding:28px 32px}
+.h1{font-size:22px;font-weight:700}
+.tabs{display:flex;gap:4px;margin:14px 0 20px;border-bottom:1px solid #e5e7eb}
+.tabs div{padding:9px 14px;color:#6b7280;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs .on{color:#2563eb;border-color:#2563eb;font-weight:600}
+
+.grid{display:grid;grid-template-columns:1fr 440px;gap:24px}
+.sec{padding:18px 20px;border-bottom:1px solid #f3f4f6}
+.sec:last-child{border-bottom:0}
+.lbl{font-size:12px;font-weight:600;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.opt{border:1px solid #e5e7eb;border-radius:10px;padding:11px 12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.opt.on{border:2px solid #2563eb;background:#f8fbff;padding:10px 11px}
+.rd{width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af;margin-top:2px;flex-shrink:0}
+.opt.on .rd{border:5px solid #2563eb}
+.opt b{font-size:13px}
+.inp{border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;background:#fff}
+.est{background:#f9fafb;border-radius:10px;padding:10px 12px;display:flex;gap:18px;font-size:12px;color:#374151}
+.est b{font-size:16px;display:block;color:#111827}
+.tg{width:36px;height:20px;border-radius:999px;background:#2563eb;position:relative;flex-shrink:0}
+.tg:after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.tg.lk{background:#93c5fd}
+.editor{border:1px solid #d1d5db;border-radius:10px;overflow:hidden}
+.tb{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #e5e7eb;background:#f9fafb;color:#4b5563}
+.tb span{width:28px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.body{padding:12px 14px;font-size:14px;color:#1f2937;min-height:120px}
+.body p{margin-bottom:8px}
+mark{background:#fef3c7;border-bottom:2px solid #f59e0b;padding:0 2px}
+.warn{display:flex;gap:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;margin-top:10px;color:#92400e;font-size:12.5px}
+.att{display:flex;gap:10px;align-items:center;border:1px dashed #d1d5db;border-radius:10px;padding:10px 12px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;border-radius:0 0 12px 12px}
+.pv{padding:18px}
+.ptabs{display:flex;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:14px}
+.ptabs div{flex:1;text-align:center;padding:6px;border-radius:6px;font-size:12px;font-weight:600;color:#6b7280}
+.ptabs .on{background:#fff;color:#111827;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.phone{border:8px solid #111827;border-radius:32px;padding:14px 12px;background:#f9fafb;height:560px;overflow:hidden}
+.ib{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:10px}
+</style></head><body>
+<div class="app"><div class="side"><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Explore</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span>Themes</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg><span>Blocks</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg><span>Wallet</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span>Pay</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg><span>My Pool</span></div><div class="nav on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span>Broadcast</span></div><div class="nav"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Inbox</span></div></div>
+<div class="main">
+ <div class="row" style="justify-content:space-between"><div><div class="h1">Broadcast</div>
+ <div class="muted">Send an update to members of Maya's Studio Pool. Members read it in their Amped inbox and, if they opted in, by email.</div></div>
+ <span class="chip gray"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 1 of 3 broadcasts used today</span></div>
+ <div class="tabs"><div class="on">New broadcast</div><div>Sent (12)</div><div>Drafts (2)</div></div>
+ <div class="grid">
+  <div class="card">
+   <div class="sec"><div class="lbl">Audience</div>
+    <div class="opt"><div class="rd"></div><div style="flex:1"><b>All pool members</b><div class="muted small">Everyone with an active stake in Maya's Studio Pool.</div></div><span class="chip gray">412 members</span></div>
+    <div class="opt on"><div class="rd"></div><div style="flex:1"><b>Members who match an access rule</b><div class="muted small">Uses the same rules as gated blocks and content.</div>
+      <div class="row" style="gap:8px;margin-top:8px"><span class="inp" style="flex:1">Studio Circle: stake at least 500 REVO</span><span class="chip">stake_min</span></div></div><span class="chip">138 members</span></div>
+    <div class="est"><div><b>138</b>match now</div><div><b>138</b>get it in the inbox</div><div><b>121</b>get it by email</div><div><b>17</b>email off or unverified</div></div>
+    <div class="muted small" style="margin-top:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Audience is locked at send time. You never see member email addresses.</div>
+   </div>
+   <div class="sec"><div class="lbl">Channels</div>
+    <div class="row" style="gap:10px;margin-bottom:8px"><div class="tg lk"></div><b style="font-size:13px">Amped inbox</b><span class="muted small">Always on for every member</span></div>
+    <div class="row" style="gap:10px"><div class="tg"></div><b style="font-size:13px">Email</b><span class="muted small">Only to members who kept creator email on</span></div>
+   </div>
+   <div class="sec"><div class="lbl">Message</div>
+    <div class="inp" style="margin-bottom:10px;font-weight:600">New track Friday. Members hear it first.</div>
+    <div class="editor"><div class="tb"><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/></svg></span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg></span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span></div>
+     <div class="body"><p>Hey Studio Circle. The new track is done. I made a rough studio cut for you before it goes public on Friday.</p>
+     <p>Stay in the pool and <mark>watch your rewards grow</mark> as we hit release week.</p><p>Thank you for being here. Maya</p></div></div>
+    <div class="warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div><b>Content check flagged 1 phrase.</b> Broadcasts cannot promote rewards, yield, prices or investment outcomes. Edit the phrase to send now. If you send as is, Amped holds it for review before any member sees it.</div></div>
+   </div>
+   <div class="sec"><div class="lbl">Attachment</div>
+    <div class="att"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><div style="flex:1"><b style="font-size:13px">studio-cut-v3.mp3</b><div class="muted small">From your content library. Opens only for signed in recipients.</div></div><span class="chip gray"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Private</span></div>
+   </div>
+   <div class="foot"><span class="btn">Send test to me</span><div class="row" style="gap:8px"><span class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Schedule</span><span class="btn amber">Send for review</span></div></div>
+  </div>
+  <div class="card pv"><div class="lbl">Preview</div>
+   <div class="ptabs"><div class="on">Inbox</div><div>Email</div></div>
+   <div class="phone">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px"><b style="font-size:16px">Inbox</b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+    <div class="ib"><div class="row" style="gap:10px;margin-bottom:8px"><div class="av" style="width:34px;height:34px;font-size:13px">MO</div><div style="flex:1"><b style="font-size:13px">Maya Ortiz</b><div class="muted" style="font-size:11px">Studio Circle members</div></div><span class="muted" style="font-size:11px">now</span></div>
+     <b style="font-size:14px">New track Friday. Members hear it first.</b>
+     <div style="font-size:12.5px;color:#374151;margin-top:6px">Hey Studio Circle. The new track is done. I made a rough studio cut for you before it goes public on Friday.</div>
+     <div class="att" style="margin-top:10px;border-style:solid;background:#f9fafb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polygon points="6 3 20 12 6 21 6 3"/></svg><span style="font-size:12px;font-weight:600">studio-cut-v3.mp3</span></div></div>
+    <div class="ib" style="opacity:.55"><div class="row" style="gap:10px"><div class="av" style="width:34px;height:34px;font-size:13px;background:linear-gradient(135deg,#34d399,#0ea5e9)">JK</div><div><b style="font-size:13px">Jon Kade</b><div class="muted" style="font-size:11px">Tour dates are live</div></div></div></div>
+   </div>
+  </div>
+ </div>
+</div></div></body></html>

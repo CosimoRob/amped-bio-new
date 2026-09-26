@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Access rules</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f5f8;color:#111827;font-size:14px}
+.top{height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 24px;gap:16px}
+.logo{font-weight:800;font-size:18px;color:#4f46e5}
+.tab{color:#6b7280;padding:6px 10px;border-radius:6px}
+.tab.on{background:#eef2ff;color:#4338ca;font-weight:600}
+.main{padding:24px 32px}
+.hdr{display:flex;align-items:flex-end;margin-bottom:18px}
+h1{font-size:22px;font-weight:800}
+.sub{color:#6b7280;font-size:13px;margin-top:4px}
+.rng{margin-left:auto;display:flex;gap:6px}
+.rng span{padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-size:12px}
+.rng .on{background:#111827;color:#fff;border-color:#111827}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.k{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px}
+.k span{font-size:12px;color:#6b7280}
+.k b{display:block;font-size:26px;font-weight:800;margin-top:4px}
+.k i{font-style:normal;font-size:12px;color:#047857}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px}
+.card h2{font-size:15px;font-weight:700;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;padding:8px 6px;border-bottom:1px solid #e5e7eb}
+td{padding:11px 6px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#4338ca}
+.chip.h{background:#fff7ed;color:#c2410c}
+.cv{display:flex;align-items:center;gap:8px}
+.cv .b{width:70px;height:6px;background:#e5e7eb;border-radius:6px;overflow:hidden}
+.cv .b i{display:block;height:100%;background:#4f46e5}
+.mut{color:#6b7280;font-size:12px}
+.li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.av{width:28px;height:28px;border-radius:50%;background:#ddd6fe;flex-shrink:0}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.li .r{margin-left:auto;font-size:12px;color:#6b7280}
+.fn{margin-top:14px;font-size:12px;color:#6b7280;line-height:1.45}
+.rs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.rs span{font-size:12px;background:#f3f4f6;border-radius:8px;padding:6px 9px}
+</style></head><body>
+<div class="top"><span class="logo">Amped.Bio</span><span class="tab">Blocks</span><span class="tab">Theme</span><span class="tab">Pool</span><span class="tab on">Access rules</span><span style="margin-left:auto;color:#6b7280">@maya.makes</span></div>
+<div class="main">
+ <div class="hdr"><div><h1>Access rules</h1><div class="sub">Who can open your gated links and content, and how often fans unlock them.</div></div>
+  <div class="rng"><span>7 days</span><span class="on">30 days</span><span>90 days</span></div></div>
+ <div class="kpis">
+  <div class="k"><span>Locked item views</span><b>3,412</b><i>+18% vs prior 30 days</i></div>
+  <div class="k"><span>Unlock attempts</span><b>604</b><i>+9%</i></div>
+  <div class="k"><span>Unlocks</span><b>388</b><i>64% of attempts</i></div>
+  <div class="k"><span>Unique members unlocking</span><b>97</b><i>of 142 pool members</i></div>
+ </div>
+ <div class="grid">
+  <div class="card"><h2>Rules</h2>
+   <table>
+    <tr><th>Rule</th><th>Requirement</th><th>Used by</th><th>Views</th><th>Unlocks</th><th>Unlock rate</th></tr>
+    <tr><td><b>Inner circle</b></td><td><span class="chip">500 REVO stake</span></td><td>2 links</td><td>1,120</td><td>212</td><td><div class="cv"><div class="b"><i style="width:19%"></i></div>19%</div></td></tr>
+    <tr><td><b>All members</b></td><td><span class="chip">Pool members</span></td><td>1 link, 1 text</td><td>2,044</td><td>176</td><td><div class="cv"><div class="b"><i style="width:9%"></i></div>9%</div></td></tr>
+    <tr><td><b>Night Drive stems</b></td><td><span class="chip h">Paid. On hold</span></td><td>1 link</td><td>248</td><td>0</td><td><span class="mut">Not active</span></td></tr>
+   </table>
+   <div class="rs"><span>Top reason for no access: stake below level (61%)</span><span>Not signed in (27%)</span><span>No wallet linked (12%)</span></div>
+  </div>
+  <div class="card"><h2>Recent unlocks</h2>
+   <div class="li"><div class="av"></div><div><b>@beatsbyjo</b><div class="mut">Studio session files</div></div><span class="r">2 min ago</span></div>
+   <div class="li"><div class="av"></div><div><span class="mono">0x7c1d…09ab</span><div class="mut">Members Discord</div></div><span class="r">14 min ago</span></div>
+   <div class="li"><div class="av"></div><div><b>@lofi.kai</b><div class="mut">Members Discord</div></div><span class="r">1 hr ago</span></div>
+   <div class="li"><div class="av"></div><div><span class="mono">0x3f9a…c21e</span><div class="mut">Studio session files</div></div><span class="r">3 hr ago</span></div>
+   <div class="fn">Fans appear by handle when they have one. Otherwise the wallet is shown truncated. Emails are never shown.</div>
+  </div>
+ </div>
+</div>
+</body></html>
