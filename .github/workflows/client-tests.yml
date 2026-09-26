@@ -26,7 +26,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          # Version comes from "packageManager" in package.json (pnpm 9, lockfile v9)
           run_install: false
 
       - name: Get pnpm store directory
@@ -103,7 +103,8 @@ jobs:
         run: |
           cd apps/server
           pnpm build
-          NODE_ENV=testing pnpm start &
+          # .env.example sets PORT=24300; the testing client (.env.testing) calls the API on 43000
+          PORT=43000 NODE_ENV=testing pnpm start &
           echo "Waiting for backend on port 43000"
           wait-for-it -t 30 localhost:43000
           if [ $? -ne 0 ]; then

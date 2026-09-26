@@ -1,10 +1,6 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-ignore
-const { defineConfig } = require("cypress");
+import { defineConfig } from "cypress";
 
-// @ts-ignore
-module.exports = defineConfig({
+export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:5173",
     supportFile: false,
