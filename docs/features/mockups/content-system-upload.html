@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Content Upload</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef1fd;color:#1a1d29;font-size:14px}
+.app{display:flex;min-height:900px}
+.side{width:84px;background:#fff;border-right:1px solid #e3e7f5;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4063e8,#8a5cf6);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.nav{width:64px;padding:8px 0;border-radius:12px;text-align:center;font-size:11px;color:#667}
+.nav i{display:block;width:22px;height:22px;margin:0 auto 4px;border-radius:6px;background:#dfe4f6}
+.nav.on{background:#eef1fd;color:#4063e8;font-weight:600}
+.nav.on i{background:#4063e8}
+.main{flex:1;padding:28px 36px;min-width:0}
+h1{font-size:24px;font-weight:700}
+.sub{color:#667;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;border:1px solid #d5dbf0;background:#fff;color:#1a1d29;font-size:14px}
+.btn.pri{background:#4063e8;color:#fff;border-color:#4063e8}
+.card{background:#fff;border:1px solid #e3e7f5;border-radius:16px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-pub{background:#e3f7ec;color:#137a45}
+.p-gate{background:#efe8ff;color:#6b3fd6}
+.p-proc{background:#fff4dc;color:#9a6200}
+.p-draft{background:#eceef4;color:#555}
+.p-rev{background:#ffe5e5;color:#b42323}
+.muted{color:#778}
+
+.wrap{display:flex;gap:24px;margin-top:22px}
+.drop{flex:1.1;padding:36px;border:2px dashed #b9c3ec;border-radius:18px;background:#f7f8ff;text-align:center}
+.big{width:64px;height:64px;border-radius:18px;background:#4063e8;margin:0 auto 14px;color:#fff;font-size:30px;line-height:64px;font-weight:300}
+.types{display:flex;justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+.t{font-size:12px;background:#fff;border:1px solid #dfe4f6;padding:5px 10px;border-radius:8px}
+.queue{flex:1.4;padding:20px}
+.q{display:flex;gap:14px;align-items:center;padding:14px 0;border-top:1px solid #eef0f6}
+.q:first-of-type{border-top:0}
+.qi{width:52px;height:52px;border-radius:10px;flex-shrink:0}
+.qn{font-weight:600}
+.steps{display:flex;gap:6px;margin-top:8px}
+.s{font-size:11px;padding:3px 8px;border-radius:6px;background:#eceef4;color:#667}
+.s.done{background:#e3f7ec;color:#137a45}
+.s.now{background:#e7ecff;color:#4063e8;font-weight:700}
+.s.bad{background:#ffe5e5;color:#b42323;font-weight:700}
+.bar{height:6px;border-radius:4px;background:#eceef4;margin-top:8px;overflow:hidden}
+.bar span{display:block;height:6px;background:#4063e8}
+.qr{margin-left:auto;text-align:right;font-size:12px;min-width:120px}
+.legal{margin-top:18px;font-size:12px;color:#667;line-height:1.5;text-align:left;background:#fff;border:1px solid #e3e7f5;border-radius:12px;padding:12px 14px}
+.muted{color:#778}</style></head><body>
+<div class="app">
+<div class="side">
+  <div class="logo">A</div>
+  <div class="nav"><i></i>Home</div>
+  <div class="nav"><i></i>Profile</div>
+  <div class="nav"><i></i>Themes</div>
+  <div class="nav"><i></i>Blocks</div>
+  <div class="nav on"><i></i>Content</div>
+  <div class="nav"><i></i>My Pool</div>
+  <div class="nav"><i></i>Wallet</div>
+</div>
+
+<div class="main">
+  <h1>Upload content</h1><div class="sub">Files go straight to private storage. Nothing is public until you publish it.</div>
+  <div class="wrap">
+    <div class="drop">
+      <div class="big">+</div>
+      <div style="font-size:18px;font-weight:700">Drop files here or browse</div>
+      <div class="muted" style="margin-top:6px">Up to 20 files at once. Large files upload in parts and resume if the connection drops.</div>
+      <div class="types">
+        <span class="t">Video MP4 MOV WEBM, 2 GB</span><span class="t">Audio MP3 WAV M4A, 500 MB</span>
+        <span class="t">Images JPG PNG WEBP GIF, 25 MB</span><span class="t">PDF EPUB, 100 MB</span><span class="t">ZIP, 500 MB</span>
+      </div>
+      <div class="legal">By uploading you confirm you own these files or have the rights to share them. Every upload is scanned for malware and checked against known illegal content before it can be published. Photo location data is removed automatically. See the Content Policy.</div>
+    </div>
+    <div class="card queue">
+      <div style="display:flex;justify-content:space-between;padding-bottom:12px"><div style="font-weight:700">Upload queue</div><div class="muted" style="font-size:12px">4 files</div></div>
+      <div class="q">
+        <div class="qi" style="background:linear-gradient(135deg,#5b7cfa,#8a5cf6)"></div>
+        <div style="flex:1"><div class="qn">lisbon-bts.mov</div>
+          <div class="steps"><span class="s now">Uploading</span><span class="s">Scanning</span><span class="s">Transcoding</span><span class="s">Ready</span></div>
+          <div class="bar"><span style="width:38%"></span></div></div>
+        <div class="qr"><b>38%</b><div class="muted">412 of 1,080 MB</div><div class="muted">Part 42 of 108</div></div>
+      </div>
+      <div class="q">
+        <div class="qi" style="background:linear-gradient(135deg,#f6a04d,#e2557a)"></div>
+        <div style="flex:1"><div class="qn">night-drive-master.wav</div>
+          <div class="steps"><span class="s done">Uploaded</span><span class="s now">Scanning</span><span class="s">Processing</span><span class="s">Ready</span></div>
+          <div class="bar"><span style="width:100%;background:#9fb0f5"></span></div></div>
+        <div class="qr"><b>Scanning</b><div class="muted">Usually under 1 min</div></div>
+      </div>
+      <div class="q">
+        <div class="qi" style="background:linear-gradient(135deg,#29b3a3,#2f7de1)"></div>
+        <div style="flex:1"><div class="qn">mix-checklist.pdf</div>
+          <div class="steps"><span class="s done">Uploaded</span><span class="s done">Scanned</span><span class="s done">Preview built</span><span class="s done">Ready</span></div></div>
+        <div class="qr"><span class="btn pri" style="padding:7px 12px;font-size:13px">Edit details</span></div>
+      </div>
+      <div class="q">
+        <div class="qi" style="background:#3a4256"></div>
+        <div style="flex:1"><div class="qn">plugins-crack.zip</div>
+          <div class="steps"><span class="s done">Uploaded</span><span class="s bad">Blocked</span></div>
+          <div class="muted" style="font-size:12px;margin-top:6px">Malware detected. The file was deleted and was never shared.</div></div>
+        <div class="qr"><span class="btn" style="padding:7px 12px;font-size:13px">Dismiss</span></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+</body></html>

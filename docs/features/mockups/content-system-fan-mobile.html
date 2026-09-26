@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Bio Content Block</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef1fd;color:#1a1d29;font-size:14px}
+.app{display:flex;min-height:900px}
+.side{width:84px;background:#fff;border-right:1px solid #e3e7f5;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4063e8,#8a5cf6);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.nav{width:64px;padding:8px 0;border-radius:12px;text-align:center;font-size:11px;color:#667}
+.nav i{display:block;width:22px;height:22px;margin:0 auto 4px;border-radius:6px;background:#dfe4f6}
+.nav.on{background:#eef1fd;color:#4063e8;font-weight:600}
+.nav.on i{background:#4063e8}
+.main{flex:1;padding:28px 36px;min-width:0}
+h1{font-size:24px;font-weight:700}
+.sub{color:#667;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;border:1px solid #d5dbf0;background:#fff;color:#1a1d29;font-size:14px}
+.btn.pri{background:#4063e8;color:#fff;border-color:#4063e8}
+.card{background:#fff;border:1px solid #e3e7f5;border-radius:16px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-pub{background:#e3f7ec;color:#137a45}
+.p-gate{background:#efe8ff;color:#6b3fd6}
+.p-proc{background:#fff4dc;color:#9a6200}
+.p-draft{background:#eceef4;color:#555}
+.p-rev{background:#ffe5e5;color:#b42323}
+.muted{color:#778}
+
+body{background:#0f1020;width:390px}
+.ph{width:390px;min-height:844px;background:linear-gradient(180deg,#1b1c3a 0%,#2a1840 100%);color:#fff;padding:20px 16px 30px}
+.av{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#f6a04d,#e2557a);margin:12px auto 10px;border:3px solid rgba(255,255,255,.3)}
+.nm{text-align:center;font-weight:800;font-size:20px}
+.hd{text-align:center;color:#b8b9d8;font-size:13px;margin-top:2px}
+.bio{text-align:center;color:#d8d9ef;font-size:13px;margin:10px 12px 16px;line-height:1.45}
+.lnk{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px;text-align:center;font-weight:600;margin-bottom:10px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 10px}
+.sec b{font-size:15px}
+.sec span{font-size:12px;color:#b8b9d8}
+.feat{border-radius:16px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.fv{height:190px;background:linear-gradient(135deg,#5b7cfa,#8a5cf6);position:relative}
+.play{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.92)}
+.play:after{content:"";position:absolute;left:22px;top:17px;border-left:16px solid #4063e8;border-top:11px solid transparent;border-bottom:11px solid transparent}
+.dur{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.6);font-size:11px;padding:2px 7px;border-radius:5px}
+.fb{padding:12px 14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.mini{border-radius:14px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.mt{height:96px;position:relative}
+.mb{padding:9px 10px;font-size:12px;font-weight:600}
+.mb div{font-weight:400;color:#b8b9d8;font-size:11px;margin-top:2px}
+.lock{position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(20,20,40,.35);display:flex;align-items:center;justify-content:center}
+.lk2{background:#fff;color:#6b3fd6;font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px}
+.foot{text-align:center;font-size:11px;color:#8d8fb0;margin-top:22px}
+</style></head><body>
+<div class="ph">
+  <div class="av"></div>
+  <div class="nm">Maya Reyes</div>
+  <div class="hd">@mayareyes</div>
+  <div class="bio">Producer and vocalist. New single out soon. Stake in my pool for early drops.</div>
+  <div class="lnk">Listen on Spotify</div>
+  <div class="sec"><b>Latest drops</b><span>See all 12</span></div>
+  <div class="feat">
+    <div class="fv"><div class="play"></div><div class="dur">12:48</div></div>
+    <div class="fb"><div style="font-weight:700">Studio session, part 1</div><div style="font-size:12px;color:#b8b9d8;margin-top:3px">Video. Free for everyone.</div></div>
+  </div>
+  <div class="row2">
+    <div class="mini"><div class="mt" style="background:linear-gradient(135deg,#f6a04d,#e2557a)"><div class="lock"><span class="lk2">500 REVO STAKERS</span></div></div><div class="mb">Demo: Night Drive<div>Audio 3:21</div></div></div>
+    <div class="mini"><div class="mt" style="background:linear-gradient(135deg,#e45d8f,#7c4dff)"></div><div class="mb">Tour poster set<div>6 images</div></div></div>
+    <div class="mini"><div class="mt" style="background:linear-gradient(135deg,#29b3a3,#2f7de1)"><div class="lock"><span class="lk2">POOL MEMBERS</span></div></div><div class="mb">Mix checklist<div>PDF 14 pages</div></div></div>
+    <div class="mini"><div class="mt" style="background:linear-gradient(135deg,#4ec7f0,#4063e8)"><div class="lock"><span class="lk2">100 REVO STAKERS</span></div></div><div class="mb">Chorus idea<div>Audio 0:48</div></div></div>
+  </div>
+  <div class="lnk" style="margin-top:16px">Stake in my pool</div>
+  <div class="foot">amped.bio/@mayareyes &nbsp;&middot;&nbsp; Report content</div>
+</div>
+</body></html>

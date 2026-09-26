@@ -1,0 +1,85 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Broadcast stats</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f9fafb;color:#111827;font-size:14px;line-height:1.45}
+.row{display:flex;align-items:center}
+.muted{color:#6b7280}
+.small{font-size:12px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px;border:1px solid #e5e7eb;background:#fff;color:#374151}
+.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.btn.amber{background:#d97706;border-color:#d97706;color:#fff}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;white-space:nowrap}
+.chip.g{background:#f0fdf4;color:#15803d}
+.chip.gray{background:#f3f4f6;color:#4b5563}
+.chip.a{background:#fffbeb;color:#b45309}
+.av{border-radius:50%;background:linear-gradient(135deg,#f472b6,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+
+.app{display:flex;min-height:900px}
+.side{width:80px;background:#fff;border-right:1px solid #e5e7eb;padding:24px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.nav{width:48px;height:48px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6b7280;font-size:10px;gap:3px;position:relative}
+.nav.on{background:#eff6ff;color:#2563eb}
+.nav .dot{position:absolute;top:6px;right:9px;width:7px;height:7px;border-radius:50%;background:#2563eb}
+.main{flex:1;padding:28px 32px}
+.h1{font-size:22px;font-weight:700}
+.tabs{display:flex;gap:4px;margin:14px 0 20px;border-bottom:1px solid #e5e7eb}
+.tabs div{padding:9px 14px;color:#6b7280;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs .on{color:#2563eb;border-color:#2563eb;font-weight:600}
+
+.grid{display:grid;grid-template-columns:340px 1fr;gap:24px}
+.li{padding:14px 16px;border-bottom:1px solid #f3f4f6}
+.li.on{background:#eff6ff;border-left:3px solid #2563eb;padding-left:13px}
+.li b{font-size:13px;display:block;margin-bottom:4px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.tile{border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px}
+.tile .n{font-size:24px;font-weight:700}
+.tile .k{font-size:12px;color:#6b7280;display:flex;gap:6px;align-items:center}
+.bar{height:8px;border-radius:999px;background:#e5e7eb;overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.tl{display:flex;gap:0;margin-top:6px}
+.st{flex:1;font-size:12px;color:#374151;position:relative;padding-top:18px}
+.st:before{content:'';position:absolute;top:4px;left:0;width:10px;height:10px;border-radius:50%;background:#16a34a}
+.st:after{content:'';position:absolute;top:8px;left:12px;right:4px;height:2px;background:#bbf7d0}
+.st:last-child:after{display:none}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:9px 0;border-bottom:1px solid #f3f4f6;text-align:left}
+th{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+td.r,th.r{text-align:right;padding-right:28px;width:90px}
+td:first-child{width:200px}
+</style></head><body>
+<div class="app"><div class="side"><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Explore</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span>Themes</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg><span>Blocks</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg><span>Wallet</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span>Pay</span></div><div class="nav"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg><span>My Pool</span></div><div class="nav on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span>Broadcast</span></div><div class="nav"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Inbox</span></div></div>
+<div class="main">
+ <div class="h1">Broadcast</div>
+ <div class="tabs"><div>New broadcast</div><div class="on">Sent (12)</div><div>Drafts (2)</div></div>
+ <div class="grid">
+  <div class="card" style="overflow:hidden">
+   <div class="li on"><b>New track Friday. Members hear it first.</b><div class="row" style="gap:6px"><span class="chip g"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Delivered</span><span class="muted small">Sep 24, 6:02 PM</span></div></div>
+   <div class="li"><b>Livestream Sunday at 8 PM ET</b><div class="row" style="gap:6px"><span class="chip g"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Delivered</span><span class="muted small">Sep 19</span></div></div>
+   <div class="li"><b>Merch preorder for members</b><div class="row" style="gap:6px"><span class="chip a"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg> In review</span><span class="muted small">Sep 18</span></div></div>
+   <div class="li"><b>Thank you for 400 members</b><div class="row" style="gap:6px"><span class="chip g"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Delivered</span><span class="muted small">Sep 12</span></div></div>
+   <div class="li"><b>Studio Q and A recap</b><div class="row" style="gap:6px"><span class="chip g"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Delivered</span><span class="muted small">Sep 5</span></div></div>
+   <div class="li"><b>Welcome to the pool</b><div class="row" style="gap:6px"><span class="chip g"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Delivered</span><span class="muted small">Aug 29</span></div></div>
+  </div>
+  <div class="card" style="padding:22px 24px">
+   <div class="row" style="justify-content:space-between"><div><div style="font-size:18px;font-weight:700">New track Friday. Members hear it first.</div>
+    <div class="row" style="gap:8px;margin-top:6px"><span class="chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Studio Circle: stake at least 500 REVO</span><span class="chip gray"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Inbox and email</span><span class="muted small">Sent Sep 24, 6:02 PM by you</span></div></div>
+    <div class="row" style="gap:8px"><span class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> View message</span><span class="btn">Duplicate</span></div></div>
+   <div class="tiles">
+    <div class="tile"><div class="k"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Recipients</div><div class="n">138</div><div class="muted small">Locked at send time</div></div>
+    <div class="tile"><div class="k"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Read in inbox</div><div class="n">96</div><div class="muted small">70% of 138</div></div>
+    <div class="tile"><div class="k"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Emails delivered</div><div class="n">118</div><div class="muted small">of 121 sent</div></div>
+    <div class="tile"><div class="k"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m9 9 11 4-5 2-2 5z"/></svg> Opened attachment</div><div class="n">61</div><div class="muted small">44% of recipients</div></div>
+   </div>
+   <div style="margin-bottom:18px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:13px">Email delivery</b><span class="muted small">121 sent</span></div>
+    <div class="bar"><span style="width:97.5%;background:#16a34a"></span><span style="width:1%;background:#f59e0b"></span><span style="width:1.5%;background:#dc2626"></span></div>
+    <div class="row small" style="gap:16px;margin-top:6px;color:#374151"><span>118 delivered</span><span>1 deferred, retrying</span><span>2 bounced</span></div></div>
+   <div style="margin-bottom:18px"><b style="font-size:13px">Status</b>
+    <div class="tl"><div class="st">Queued<br><span class="muted">6:02:04 PM</span></div><div class="st">Inbox fan-out done<br><span class="muted">6:02:06 PM</span></div><div class="st">Email batches sent<br><span class="muted">6:04:41 PM</span></div><div class="st">Complete<br><span class="muted">6:31:10 PM</span></div></div></div>
+   <table><tr><th>Signal</th><th class="r">Count</th><th>What it means</th></tr>
+    <tr><td>Emails bounced</td><td class="r">2</td><td class="muted">The address could not receive mail. Amped stops emailing it.</td></tr>
+    <tr><td>Link clicks</td><td class="r">31</td><td class="muted">Unique members who clicked any link in email or inbox.</td></tr>
+    <tr><td>Turned off your email</td><td class="r">2</td><td class="muted">They still get your broadcasts in their Amped inbox.</td></tr>
+    <tr><td>Reports</td><td class="r">0</td><td class="muted">Members who reported this broadcast to Amped.</td></tr></table>
+   <div class="muted small" style="margin-top:12px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Stats are totals only. Amped does not show which member opened, clicked or unsubscribed.</div>
+  </div>
+ </div>
+</div></div></body></html>

@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Creator Pool Explorer</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--slate:#0f172a;--slate2:#1e293b;--g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;--g300:#cbd5e1;--g400:#94a3b8;--g500:#64748b;--g600:#475569;--g700:#334155;--g900:#0f172a;--blue:#2563eb;--blue50:#eff6ff;--purple:#9333ea;--green:#15803d;--red:#b91c1c;--amber50:#fffbeb;--amber:#b45309}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--g50);color:var(--g900);font-size:14px;line-height:1.45}
+a{color:inherit;text-decoration:none}
+.ic{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.grad{background:linear-gradient(135deg,#3b82f6,#9333ea)}
+.gradtext{background:linear-gradient(90deg,#3b82f6,#9333ea);-webkit-background-clip:text;color:transparent}
+.hdr{height:64px;background:#fff;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.nav{display:flex;gap:24px;margin-left:36px;font-weight:500;color:var(--g600)}
+.nav .on{color:var(--g900);border-bottom:2px solid var(--blue);padding-bottom:19px;margin-bottom:-21px}
+.row{display:flex;align-items:center}
+.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.net{background:#fef3c7;color:#92400e}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:12px;font-weight:600;font-size:14px;border:1px solid var(--g200);background:#fff;color:var(--g700)}
+.btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.dark{background:var(--slate);color:#fff;border-color:var(--slate)}
+.card{background:#fff;border:1px solid var(--g200);border-radius:16px}
+.muted{color:var(--g500)}
+.small{font-size:12px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--g100);color:var(--g600);font-size:11px;font-weight:600}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex:none}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--g500);text-align:left;font-weight:600;padding:10px 16px;border-bottom:1px solid var(--g200);background:var(--g50)}
+td{padding:12px 16px;border-bottom:1px solid var(--g100);vertical-align:middle}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--green);font-weight:600}.down{color:var(--red);font-weight:600}
+.disc{display:flex;gap:10px;align-items:flex-start;background:var(--g100);border:1px solid var(--g200);border-radius:12px;padding:12px 16px;color:var(--g600);font-size:12px}
+.chip{padding:6px 12px;border-radius:999px;border:1px solid var(--g200);background:#fff;font-weight:500;color:var(--g600);font-size:13px}
+.chip.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.input{display:flex;align-items:center;gap:8px;border:1px solid var(--g300);border-radius:10px;padding:9px 12px;background:#fff;color:var(--g400)}
+.sel{display:flex;align-items:center;gap:6px;border:1px solid var(--g300);border-radius:10px;padding:9px 12px;background:#fff;color:var(--g700);font-weight:500}
+.lbl{font-size:12px;color:var(--g500);font-weight:500}
+.big{font-size:22px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+h1{font-size:30px;letter-spacing:-.02em}
+h2{font-size:16px}
+</style></head><body><div class="hdr"><div class="row"><div class="logo"><span class="gradtext">amped</span>.bio</div><span class="tag" style="margin-left:10px">Explorer</span><div class="nav"><a class="on">Pools</a><a class="">Creators</a><a class="">Activity</a><a class="">Blog</a></div></div>
+<div class="row gap12"><span class="pill net"><span style="width:7px;height:7px;border-radius:9px;background:#d97706;display:inline-block"></span>Libertas testnet</span><a class="btn"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>Connect wallet</a><a class="btn dark">Create your pool</a></div></div>
+<div style="background:#0f172a;padding:36px 32px 28px;position:relative;overflow:hidden">
+<div style="position:absolute;right:-120px;top:-160px;width:520px;height:520px;border-radius:999px;background:radial-gradient(circle,rgba(147,51,234,.35),transparent 65%)"></div>
+<div style="max-width:1376px;margin:0 auto;position:relative">
+<div class="small" style="color:#93c5fd;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Creator Pool Explorer</div>
+<h1 style="color:#fff;margin-top:6px">Every creator pool on the REVO network</h1>
+<p style="color:#cbd5e1;margin-top:6px;max-width:680px">Browse pools, see who backs each creator, and verify every number on chain. No account needed to look.</p>
+<div class="row gap16" style="margin-top:22px"><div style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px"><div style="font-size:12px;color:#cbd5e1">Creator pools</div><div class="big" style="color:#fff;margin-top:4px">1,284</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">+37 this week</div></div><div style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px"><div style="font-size:12px;color:#cbd5e1">REVO staked in creator pools</div><div class="big" style="color:#fff;margin-top:4px">48.2M</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">Sum of creator and fan stake</div></div><div style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px"><div style="font-size:12px;color:#cbd5e1">Unique staking wallets</div><div class="big" style="color:#fff;margin-top:4px">9,612</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">Across all pools</div></div><div style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px"><div style="font-size:12px;color:#cbd5e1">Stake transactions, 24h</div><div class="big" style="color:#fff;margin-top:4px">312</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">Stakes and unstakes</div></div></div></div></div>
+<div style="max-width:1376px;margin:0 auto;padding:24px 32px">
+<div class="row gap12" style="margin-bottom:14px">
+<div class="input" style="flex:1"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>Search creators, pools, handles or a 0x address</div>
+<div class="sel">Sort: Total staked <svg class="ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+<div class="sel"><svg class="ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg>Filters <span class="pill" style="background:#eff6ff;color:#2563eb;padding:1px 7px">2</span></div>
+<div class="row" style="border:1px solid #cbd5e1;border-radius:10px;overflow:hidden"><span style="padding:9px 11px;background:#0f172a;color:#fff"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg></span><span style="padding:9px 11px;background:#fff;color:#64748b"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span></div>
+</div>
+<div class="row gap8" style="margin-bottom:16px;flex-wrap:wrap"><span class="chip on">All</span><span class="chip ">Music</span><span class="chip ">Fitness</span><span class="chip ">Food</span><span class="chip ">Art</span><span class="chip ">Education</span><span class="chip ">Gaming</span><span class="chip ">Web3</span><span class="chip ">Travel</span><span class="muted small" style="margin-left:auto">Active filters: At least 25 stakers. Take rate up to 15%.</span></div>
+<div class="card" style="overflow:hidden"><table><thead><tr><th>#</th><th>Pool</th><th>Category</th><th class="num">Total staked</th><th class="num">Stakers</th><th class="num">Stakers, 30d</th><th class="num">Creator take rate</th><th>Created</th><th></th></tr></thead><tbody><tr><td class="muted" style="width:40px">1</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#9333ea);font-size:14px">M</div><div><div style="font-weight:600">Maya Loops Studio</div><div class="muted small">@mayaloops</div></div></div></td>
+<td><span class="tag">Music</span></td>
+<td class="num" style="font-weight:600">1,204,550 <span class="muted small">REVO</span></td>
+<td class="num">412</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,22.0 2.9,22.0 5.8,20.8 8.7,21.0 11.6,20.1 14.5,19.6 17.4,19.8 20.3,18.9 23.2,19.3 26.1,18.6 29.0,18.8 31.9,19.0 34.8,18.4 37.7,16.5 40.6,16.7 43.4,16.5 46.3,15.2 49.2,12.9 52.1,11.7 55.0,10.9 57.9,8.4 60.8,8.8 63.7,6.5 66.6,6.1 69.5,6.1 72.4,6.3 75.3,5.8 78.2,3.6 81.1,3.5 84.0,2.0" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+8.4%</span></div></td>
+<td class="num">10%</td>
+<td class="muted">Jun 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">2</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#f97316,#db2777);font-size:14px">T</div><div><div style="font-weight:600">Trail Runner Jo</div><div class="muted small">@trailrunnerjo</div></div></div></td>
+<td><span class="tag">Fitness</span></td>
+<td class="num" style="font-weight:600">986,120 <span class="muted small">REVO</span></td>
+<td class="num">377</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,21.1 2.9,20.9 5.8,20.1 8.7,20.9 11.6,21.7 14.5,22.0 17.4,20.7 20.3,20.3 23.2,20.3 26.1,19.3 29.0,18.8 31.9,18.8 34.8,17.0 37.7,15.6 40.6,15.8 43.4,14.8 46.3,14.0 49.2,11.8 52.1,10.1 55.0,10.2 57.9,7.4 60.8,8.2 63.7,7.7 66.6,5.8 69.5,6.4 72.4,5.6 75.3,6.8 78.2,5.2 81.1,3.2 84.0,2.0" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+5.1%</span></div></td>
+<td class="num">8%</td>
+<td class="muted">May 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">3</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#0ea5e9);font-size:14px">C</div><div><div style="font-weight:600">Chef Dami Kitchen</div><div class="muted small">@chefdami</div></div></div></td>
+<td><span class="tag">Food</span></td>
+<td class="num" style="font-weight:600">742,900 <span class="muted small">REVO</span></td>
+<td class="num">289</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,21.5 2.9,22.0 5.8,20.4 8.7,19.4 11.6,18.4 14.5,18.0 17.4,15.6 20.3,12.5 23.2,12.0 26.1,10.4 29.0,12.5 31.9,10.7 34.8,9.2 37.7,5.6 40.6,2.9 43.4,3.6 46.3,3.7 49.2,2.0 52.1,4.5 55.0,4.1 57.9,5.6 60.8,7.4 63.7,9.5 66.6,7.2 69.5,8.9 72.4,9.9 75.3,9.9 78.2,7.1 81.1,9.1 84.0,8.8" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+2.6%</span></div></td>
+<td class="num">12%</td>
+<td class="muted">Jul 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">4</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#8b5cf6,#ec4899);font-size:14px">P</div><div><div style="font-weight:600">Pixel Noir Collective</div><div class="muted small">@pixelnoir</div></div></div></td>
+<td><span class="tag">Art</span></td>
+<td class="num" style="font-weight:600">611,340 <span class="muted small">REVO</span></td>
+<td class="num">198</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,22.0 2.9,21.3 5.8,20.6 8.7,19.8 11.6,19.5 14.5,19.1 17.4,18.8 20.3,17.9 23.2,16.9 26.1,16.7 29.0,16.6 31.9,16.3 34.8,16.1 37.7,15.6 40.6,14.9 43.4,14.6 46.3,14.6 49.2,14.1 52.1,13.7 55.0,12.9 57.9,11.6 60.8,10.7 63.7,9.9 66.6,9.0 69.5,7.9 72.4,7.9 75.3,6.4 78.2,5.1 81.1,3.5 84.0,2.0" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+11.9%</span></div></td>
+<td class="num">15%</td>
+<td class="muted">Aug 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">5</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#0ea5e9,#6366f1);font-size:14px">C</div><div><div style="font-weight:600">Coach Renata</div><div class="muted small">@coachrenata</div></div></div></td>
+<td><span class="tag">Education</span></td>
+<td class="num" style="font-weight:600">540,005 <span class="muted small">REVO</span></td>
+<td class="num">233</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,2.0 2.9,2.6 5.8,4.1 8.7,3.8 11.6,5.4 14.5,7.0 17.4,8.1 20.3,9.2 23.2,9.9 26.1,11.3 29.0,12.9 31.9,14.0 34.8,15.2 37.7,15.7 40.6,17.0 43.4,16.3 46.3,16.2 49.2,17.2 52.1,17.9 55.0,18.4 57.9,18.9 60.8,19.9 63.7,19.3 66.6,18.3 69.5,18.6 72.4,18.7 75.3,19.8 78.2,20.9 81.1,21.4 84.0,22.0" fill="none" stroke="#b91c1c" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="down" style="width:52px;text-align:right">-1.8%</span></div></td>
+<td class="num">10%</td>
+<td class="muted">Apr 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">6</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#f59e0b,#ef4444);font-size:14px">B</div><div><div style="font-weight:600">Beats by Omar</div><div class="muted small">@beatsbyomar</div></div></div></td>
+<td><span class="tag">Music</span></td>
+<td class="num" style="font-weight:600">498,760 <span class="muted small">REVO</span></td>
+<td class="num">154</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,20.2 2.9,20.8 5.8,22.0 8.7,20.1 11.6,19.5 14.5,20.3 17.4,19.7 20.3,20.9 23.2,20.3 26.1,18.2 29.0,16.5 31.9,15.3 34.8,15.7 37.7,15.7 40.6,16.4 43.4,15.0 46.3,14.3 49.2,12.8 52.1,12.9 55.0,13.5 57.9,11.8 60.8,9.4 63.7,7.4 66.6,5.6 69.5,3.7 72.4,2.0 75.3,2.7 78.2,2.0 81.1,2.0 84.0,3.6" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+3.2%</span></div></td>
+<td class="num">10%</td>
+<td class="muted">Aug 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">7</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#14b8a6,#22c55e);font-size:14px">S</div><div><div style="font-weight:600">Studio Kai Builds</div><div class="muted small">@studiokai</div></div></div></td>
+<td><span class="tag">Web3</span></td>
+<td class="num" style="font-weight:600">455,100 <span class="muted small">REVO</span></td>
+<td class="num">141</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,19.5 2.9,20.7 5.8,22.0 8.7,20.8 11.6,18.0 14.5,18.2 17.4,15.5 20.3,12.3 23.2,9.3 26.1,10.1 29.0,11.8 31.9,13.5 34.8,15.3 37.7,17.0 40.6,16.2 43.4,13.6 46.3,11.3 49.2,11.4 52.1,10.3 55.0,8.2 57.9,10.8 60.8,9.7 63.7,6.9 66.6,4.9 69.5,3.1 72.4,3.1 75.3,5.2 78.2,3.1 81.1,4.2 84.0,2.0" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+0.4%</span></div></td>
+<td class="num">5%</td>
+<td class="muted">Mar 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">8</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#a855f7);font-size:14px">L</div><div><div style="font-weight:600">Lena Logs Gaming</div><div class="muted small">@lenalogs</div></div></div></td>
+<td><span class="tag">Gaming</span></td>
+<td class="num" style="font-weight:600">402,880 <span class="muted small">REVO</span></td>
+<td class="num">176</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,22.0 2.9,21.7 5.8,21.4 8.7,20.0 11.6,19.0 14.5,19.1 17.4,19.3 20.3,19.5 23.2,18.1 26.1,16.9 29.0,17.1 31.9,15.8 34.8,14.1 37.7,13.1 40.6,12.8 43.4,12.1 46.3,12.3 49.2,12.9 52.1,11.0 55.0,10.0 57.9,9.2 60.8,7.3 63.7,6.8 66.6,5.0 69.5,3.3 72.4,3.3 75.3,3.3 78.2,3.1 81.1,3.1 84.0,2.0" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="up" style="width:52px;text-align:right">+6.7%</span></div></td>
+<td class="num">10%</td>
+<td class="muted">Jul 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr><tr><td class="muted" style="width:40px">9</td>
+<td><div class="row gap12"><div class="av" style="width:36px;height:36px;background:linear-gradient(135deg,#e11d48,#f97316);font-size:14px">N</div><div><div style="font-weight:600">Nomad Nia</div><div class="muted small">@nomadnia</div></div></div></td>
+<td><span class="tag">Travel</span></td>
+<td class="num" style="font-weight:600">377,450 <span class="muted small">REVO</span></td>
+<td class="num">120</td>
+<td class="num"><div class="row gap8" style="justify-content:flex-end"><svg width="84" height="24" viewBox="0 0 84 24"><polyline points="0.0,4.5 2.9,5.5 5.8,9.0 8.7,5.8 11.6,7.3 14.5,8.0 17.4,7.6 20.3,4.4 23.2,5.4 26.1,2.0 29.0,2.3 31.9,2.3 34.8,2.4 37.7,7.0 40.6,7.8 43.4,10.8 46.3,15.2 49.2,13.1 52.1,16.1 55.0,16.5 57.9,15.0 60.8,14.8 63.7,16.5 66.6,16.6 69.5,16.4 72.4,14.4 75.3,17.9 78.2,17.7 81.1,20.0 84.0,22.0" fill="none" stroke="#b91c1c" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="down" style="width:52px;text-align:right">-0.6%</span></div></td>
+<td class="num">12%</td>
+<td class="muted">Jun 2026</td>
+<td style="width:30px;color:#94a3b8"><svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></td></tr></tbody></table>
+<div class="row" style="justify-content:space-between;padding:12px 16px" ><span class="muted small">Showing 1 to 9 of 1,284 pools. Updated 2 minutes ago from block 4,812,330.</span><div class="row gap8"><a class="btn" style="padding:6px 12px">Previous</a><a class="btn" style="padding:6px 12px">Next</a></div></div></div>
+<div style="margin-top:16px"><div class="disc"><svg class="ic" style="width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><div>Amped.Bio shows on-chain pool data for information only. It is not investment advice or an offer of any financial product. Staking locks REVO in a smart contract. Rewards the network distributes to a pool are variable and not guaranteed. Data refreshes every 5 minutes. Check any figure on <u>Revoscan</u>.</div></div></div></div></body></html>

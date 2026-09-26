@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Locked Preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef1fd;color:#1a1d29;font-size:14px}
+.app{display:flex;min-height:900px}
+.side{width:84px;background:#fff;border-right:1px solid #e3e7f5;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4063e8,#8a5cf6);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.nav{width:64px;padding:8px 0;border-radius:12px;text-align:center;font-size:11px;color:#667}
+.nav i{display:block;width:22px;height:22px;margin:0 auto 4px;border-radius:6px;background:#dfe4f6}
+.nav.on{background:#eef1fd;color:#4063e8;font-weight:600}
+.nav.on i{background:#4063e8}
+.main{flex:1;padding:28px 36px;min-width:0}
+h1{font-size:24px;font-weight:700}
+.sub{color:#667;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;border:1px solid #d5dbf0;background:#fff;color:#1a1d29;font-size:14px}
+.btn.pri{background:#4063e8;color:#fff;border-color:#4063e8}
+.card{background:#fff;border:1px solid #e3e7f5;border-radius:16px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-pub{background:#e3f7ec;color:#137a45}
+.p-gate{background:#efe8ff;color:#6b3fd6}
+.p-proc{background:#fff4dc;color:#9a6200}
+.p-draft{background:#eceef4;color:#555}
+.p-rev{background:#ffe5e5;color:#b42323}
+.muted{color:#778}
+
+body{background:#0f1020;width:390px}
+.ph{width:390px;min-height:844px;background:linear-gradient(180deg,#1b1c3a 0%,#2a1840 100%);color:#fff;padding:20px 16px 30px}
+.av{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#f6a04d,#e2557a);margin:12px auto 10px;border:3px solid rgba(255,255,255,.3)}
+.nm{text-align:center;font-weight:800;font-size:20px}
+.hd{text-align:center;color:#b8b9d8;font-size:13px;margin-top:2px}
+.bio{text-align:center;color:#d8d9ef;font-size:13px;margin:10px 12px 16px;line-height:1.45}
+.lnk{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px;text-align:center;font-weight:600;margin-bottom:10px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 10px}
+.sec b{font-size:15px}
+.sec span{font-size:12px;color:#b8b9d8}
+.feat{border-radius:16px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.fv{height:190px;background:linear-gradient(135deg,#5b7cfa,#8a5cf6);position:relative}
+.play{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.92)}
+.play:after{content:"";position:absolute;left:22px;top:17px;border-left:16px solid #4063e8;border-top:11px solid transparent;border-bottom:11px solid transparent}
+.dur{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.6);font-size:11px;padding:2px 7px;border-radius:5px}
+.fb{padding:12px 14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.mini{border-radius:14px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.mt{height:96px;position:relative}
+.mb{padding:9px 10px;font-size:12px;font-weight:600}
+.mb div{font-weight:400;color:#b8b9d8;font-size:11px;margin-top:2px}
+.lock{position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(20,20,40,.35);display:flex;align-items:center;justify-content:center}
+.lk2{background:#fff;color:#6b3fd6;font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px}
+.foot{text-align:center;font-size:11px;color:#8d8fb0;margin-top:22px}
+
+.hero{height:300px;border-radius:18px;background:linear-gradient(135deg,#f6a04d,#e2557a);position:relative;overflow:hidden;margin-top:12px}
+.hero .blur{position:absolute;inset:0;backdrop-filter:blur(14px);background:rgba(20,20,40,.3)}
+.badge{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#fff}
+.badge:before{content:"";position:absolute;left:21px;top:16px;width:22px;height:18px;border:4px solid #6b3fd6;border-bottom:0;border-radius:12px 12px 0 0}
+.badge:after{content:"";position:absolute;left:17px;top:30px;width:30px;height:20px;background:#6b3fd6;border-radius:4px}
+.pv{position:absolute;left:14px;right:14px;bottom:14px;background:rgba(0,0,0,.45);border-radius:12px;padding:10px 12px;font-size:12px;display:flex;align-items:center;gap:10px}
+.pp{width:28px;height:28px;border-radius:50%;background:#fff;flex-shrink:0;position:relative}
+.pp:after{content:"";position:absolute;left:11px;top:8px;border-left:9px solid #e2557a;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.pt{flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,.3)}
+.pt span{display:block;width:30%;height:4px;background:#fff;border-radius:3px}
+.ttl{font-size:21px;font-weight:800;margin-top:16px}
+.ds{color:#d8d9ef;font-size:13px;line-height:1.5;margin-top:6px}
+.box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;margin-top:16px}
+.req{display:flex;gap:10px;align-items:center;padding:9px 0;font-size:14px}
+.req+.req{border-top:1px solid rgba(255,255,255,.1)}
+.ok{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:2px solid #8d8fb0}
+.cta{display:block;text-align:center;background:#fff;color:#1b1c3a;font-weight:800;border-radius:14px;padding:14px;margin-top:14px}
+.cta2{display:block;text-align:center;border:1px solid rgba(255,255,255,.3);font-weight:700;border-radius:14px;padding:12px;margin-top:10px}
+.fine{font-size:11px;color:#9b9dc0;line-height:1.5;margin-top:14px}
+.back{font-size:13px;color:#b8b9d8}
+</style></head><body>
+<div class="ph">
+  <div class="back">&larr; @mayareyes</div>
+  <div class="hero"><div class="blur"></div><div class="badge"></div>
+    <div class="pv"><div class="pp"></div><div class="pt"><span></span></div><div>0:30 preview</div></div></div>
+  <div class="ttl">Demo: Night Drive</div>
+  <div class="ds">First pass of the new single. Recorded in one take at the Lisbon studio.</div>
+  <div class="box">
+    <div style="font-weight:700;margin-bottom:4px">Members with 500 REVO staked</div>
+    <div class="req"><div class="ok"></div><div>Stake 500 REVO or more in Maya's pool<div style="font-size:12px;color:#b8b9d8">Your stake today: 120 REVO. 380 more to unlock.</div></div></div>
+    <span class="cta">Stake in Maya's pool</span>
+    <span class="cta2">Connect a different wallet</span>
+  </div>
+  <div class="fine">Staking locks tokens in the creator pool under the pool terms. Access continues while your stake meets the rule. Staking is not a purchase of this content and carries no promise of return. Read the pool terms before you stake.</div>
+</div>
+</body></html>

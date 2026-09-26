@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Brand signup</title><style>*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f8fafc;color:#0f172a;font-size:14px;line-height:1.45}
+.top{height:60px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 28px;gap:28px}
+.logo{font-weight:800;font-size:18px;letter-spacing:-.3px}
+.logo span{color:#2563eb}
+.logo small{font-weight:600;font-size:12px;color:#64748b;margin-left:8px;padding:2px 8px;border:1px solid #cbd5e1;border-radius:999px}
+.nav a{color:#475569;text-decoration:none;font-weight:500;margin-right:22px}
+.nav a.on{color:#2563eb;border-bottom:2px solid #2563eb;padding-bottom:18px}
+.sp{flex:1}
+.credits{font-size:13px;color:#334155;background:#eff6ff;border:1px solid #bfdbfe;padding:6px 12px;border-radius:8px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#1e293b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;font-weight:600;font-size:13px;border:1px solid #cbd5e1;background:#fff;color:#0f172a}
+.btn.p{background:#2563eb;border-color:#2563eb;color:#fff}
+.btn.g{background:#16a34a;border-color:#16a34a;color:#fff}
+.btn.s{height:30px;padding:0 10px;font-size:12px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px}
+.chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;margin:0 4px 4px 0}
+.chip.on{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px}
+.b-green{background:#dcfce7;color:#166534}.b-blue{background:#dbeafe;color:#1e40af}.b-amber{background:#fef3c7;color:#92400e}.b-gray{background:#f1f5f9;color:#475569}.b-red{background:#fee2e2;color:#991b1b}.b-violet{background:#ede9fe;color:#5b21b6}
+.muted{color:#64748b}.xs{font-size:12px}.b{font-weight:600}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:10px;font-size:13px}
+.alert.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+.alert.warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
+.ico{width:16px;height:16px;flex:none;border-radius:50%;border:2px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;line-height:1;margin-top:1px}
+label.f{display:block;font-size:12px;font-weight:600;color:#334155;margin:14px 0 6px}
+.in{height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 12px;display:flex;align-items:center;background:#fff;color:#0f172a;font-size:13px}
+.in.ph{color:#94a3b8}
+.pl{display:inline-flex;width:22px;height:22px;border-radius:6px;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;margin-right:4px}
+.ig{background:#c13584}.tt{background:#111}.yt{background:#dc2626}.xx{background:#0f172a}.tw{background:#7c3aed}.sb{background:#ea580c}.li{background:#0a66c2}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex:none}
+.check{width:16px;height:16px;border:1.5px solid #94a3b8;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:11px;color:#fff}
+.check.on{background:#2563eb;border-color:#2563eb}
+
+.wrap{display:grid;grid-template-columns:1fr 420px;gap:28px;max-width:1180px;margin:32px auto;padding:0 28px}
+.steps{display:flex;gap:10px;margin-bottom:22px}
+.step{flex:1;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-size:12px;color:#64748b}
+.step b{display:block;color:#0f172a;font-size:13px}
+.step.done{border-color:#86efac;background:#f0fdf4}
+.step.cur{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ok{color:#15803d;font-size:12px;margin-top:6px;font-weight:600}
+.legal{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;color:#334155}
+</style></head><body>
+<div class="top"><div class="logo">Amped<span>.Bio</span><small>for Brands</small></div><div class="sp"></div><span class="muted xs">Already have a brand account?</span><a class="btn s">Sign in</a></div>
+<div class="wrap">
+ <div>
+  <h1 style="font-size:24px;margin-bottom:4px">Create your brand account</h1>
+  <p class="muted" style="margin-bottom:20px">Verified brands can search opted-in creators and send collaboration requests.</p>
+  <div class="steps">
+   <div class="step done"><b>1. Account</b>Work email confirmed</div>
+   <div class="step cur"><b>2. Company</b>Tell us who you are</div>
+   <div class="step"><b>3. Domain check</b>Automatic</div>
+   <div class="step"><b>4. Review</b>Within 1 business day</div>
+  </div>
+  <div class="card" style="padding:22px 24px">
+   <div class="row">
+    <div><label class="f">Company name</label><div class="in">Fernhollow Goods</div></div>
+    <div><label class="f">Company website</label><div class="in">https://fernhollowgoods.example</div></div>
+   </div>
+   <div class="row">
+    <div><label class="f">Work email</label><div class="in">dana.ruiz@fernhollowgoods.example</div><div class="ok">&#10003; Email domain matches the company website.</div></div>
+    <div><label class="f">Your role</label><div class="in">Partnerships Manager</div></div>
+   </div>
+   <div class="row">
+    <div><label class="f">Industry</label><div class="in">Outdoor and travel gear</div></div>
+    <div><label class="f">Headquarters country</label><div class="in">United States</div></div>
+   </div>
+   <label class="f">What do you plan to use Amped.Bio for?</label>
+   <div><span class="chip on">Product seeding</span><span class="chip on">Sponsored content</span><span class="chip">Affiliate programs</span><span class="chip">Events</span><span class="chip">Ambassador programs</span></div>
+   <div class="alert warn" style="margin-top:16px"><span class="ico">!</span><div>Free email domains such as Gmail or Outlook cannot verify a brand. Agencies verify with their own domain and list the brands they represent in step 4.</div></div>
+   <div class="legal"><span class="check on">&#10003;</span><span>I agree to the Brand Terms. I will contact creators only through Amped.Bio and will not copy creator data outside the platform.</span></div>
+   <div class="legal"><span class="check on">&#10003;</span><span>Sponsored content we arrange will carry a clear disclosure such as "#ad" or "Paid partnership", as the FTC Endorsement Guides require.</span></div>
+   <div style="display:flex;justify-content:space-between;margin-top:22px"><a class="btn">Back</a><a class="btn p">Continue to domain check</a></div>
+  </div>
+ </div>
+ <div>
+  <div class="card" style="padding:20px 22px">
+   <div class="b" style="margin-bottom:10px">How verification works</div>
+   <ol style="padding-left:18px;color:#334155;font-size:13px;display:grid;gap:8px">
+    <li>You confirm a work email on your company domain.</li>
+    <li>We check that the domain has a live website and matches your company name.</li>
+    <li>Optional: add a DNS TXT record to get the <span class="badge b-blue">Domain verified</span> badge at once.</li>
+    <li>Our team reviews new brands within 1 business day.</li>
+   </ol>
+  </div>
+  <div class="card" style="padding:20px 22px;margin-top:16px">
+   <div class="b" style="margin-bottom:10px">What creators see about you</div>
+   <div style="display:flex;gap:12px;align-items:center">
+    <div class="av" style="width:44px;height:44px;background:#15803d">FG</div>
+    <div><div class="b">Fernhollow Goods</div><div class="xs muted">fernhollowgoods.example</div><span class="badge b-green" style="margin-top:4px">&#10003; Verified brand</span></div>
+   </div>
+   <p class="xs muted" style="margin-top:12px">Your company name, logo, website and verification status appear on every request. Creators can report or block any brand.</p>
+  </div>
+  <div class="card" style="padding:16px 22px;margin-top:16px">
+   <div class="xs muted">Free during beta. 25 collaboration requests per month per brand.</div>
+  </div>
+ </div>
+</div>
+</body></html>
