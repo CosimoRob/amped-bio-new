@@ -6,7 +6,7 @@ Business overview: [docs/overviews/content-system.md](../overviews/content-syste
 
 Rob: "we'll need a content system where people can upload various forms of content."
 
-This is the base layer for paid content (#18), stake-gated content (#19) and broadcast attachments. Creator payments are on hold. Version 1 ships free and members-only content. Paid unlock plugs in later through the access gating engine with no change to this system.
+This is the base layer for paid content (#18), stake-gated content (formerly #19, merged into this spec and #21) and broadcast attachments. Creator payments are on hold. Version 1 ships free and members-only content. Paid unlock plugs in later through the access gating engine with no change to this system.
 
 ## 1. Research
 

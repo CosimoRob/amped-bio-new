@@ -4,7 +4,7 @@ Status: spec for review. Build Board item #21.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
 Business overview: [docs/overviews/access-gating-engine.md](../overviews/access-gating-engine.md)
 
-One rule engine decides who can open a gated link, content item or broadcast. It powers paid links (#16), reward gated links (#17), paid content (#18), stake gated content (#19) and gated broadcasts. This spec owns the shared contract that the content system, broadcast, pool explorer and brand portal specs depend on. Section 3.1 is that contract.
+One rule engine decides who can open a gated link, content item or broadcast. It powers paid links (#16), reward gated links (#17), paid content (#18), stake gated content (formerly #19, merged into #20 and this spec) and gated broadcasts. This spec owns the shared contract that the content system, broadcast, pool explorer and brand portal specs depend on. Section 3.1 is that contract.
 
 ## 1. Research
 
@@ -476,7 +476,7 @@ Batch: `checkAccessBatch` groups resources by rule, reads each rule once, and re
 
 ### 3.7 Integration points for sibling specs
 
-- **Content system (#18, #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before signing CloudFront URLs or minting Mux tokens. Log `locked_view` for locked content renders so the 90-day KPIs cover content items. Members-only content ships no earlier than 2 weeks after Phase 1 of this spec (3.11).
+- **Content system (#18, and stake-gated content, formerly #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before signing CloudFront URLs or minting Mux tokens. Log `locked_view` for locked content renders so the 90-day KPIs cover content items. Members-only content ships no earlier than 2 weeks after Phase 1 of this spec (3.11).
 - **Broadcast.** Add `accessRuleId` to `Broadcast`. Register a resolver for `"broadcast"`. Use `listEligibleUserIds` for targeting and `checkAccess` at open time.
 - **Pool explorer.** May show "Members get access to N items" using `access.rules.list` counts for that pool. It must not show this next to APY or pool performance figures. The pool page calls `access.trackPoolVisit` when opened with `?ref=gate`.
 - **Brand portal.** Can reuse `stake_min` and `pool_member` rules for brand campaign items once resolvers exist. No new kinds in v1.
@@ -559,7 +559,7 @@ Timings follow the business overview launch plan. All dates are proposed.
 |---|---|---|---|
 | 0 | October to November 2026 (proposed) | Counsel review of rule types, copy and the stats screen. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry, `compliance.ts` list and disclosure. D1 email fix in `handle.getHandle`. Recruit 10 pilot creators with counsel-approved outreach copy. | Counsel sign off. D1 fix live. Sibling spec owners confirm contract. |
 | 1 | December 2026, after counsel sign off (proposed) | Engine with `stake_min` and `pool_member`. Link blocks only. `/go`. Locked DTO. SEO and share preview exclusions. Rule builder. Analytics events from 3.8 and the compliance copy check, so 90-day KPIs start at launch. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist of the 10 pilot creators. | Counsel sign off recorded. SSR leak test green and nightly leak scan clean before any public post. |
-| 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. | Pilot unlock rate and error rate reviewed. |
+| 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, and stake-gated content, formerly #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. | Pilot unlock rate and error rate reviewed. |
 | 3 | Later, no date | `paid` via the Revolution payments `PaymentVerifier` (#16, #18). `reward_points` ledger (#17). | Payments shipped. Counsel review of points and paid copy. |
 | 4 | Later, no date | Combinators (`any`, `all`). SIWE for external wallets. `follower` once a follow graph exists. | Demand from creators. |
 

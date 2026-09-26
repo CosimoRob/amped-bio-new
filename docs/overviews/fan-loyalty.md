@@ -7,7 +7,7 @@ This overview replaces two Lovable prototypes (`CosimoRob/revolution-rewards-hub
 
 ## 1. Research summary
 
-Full research: [fan-loyalty-research.md](fan-loyalty-research.md).
+Full research: [fan-loyalty-research.md](../features/fan-loyalty-research.md).
 
 ### 1.1 Legacy prototypes
 

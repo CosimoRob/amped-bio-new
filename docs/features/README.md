@@ -7,9 +7,11 @@ Drafted by Claude for Rob Frasca, 2026-09-26. Each spec has research, an overvie
 | 1 | [Creator Pool Broadcast](creator-pool-broadcast.md) | Spec for review |
 | 7 | [Brand Portal](brand-portal.md) | Spec for review |
 | 9 | [Creator Pool Explorer](creator-pool-explorer.md) | Spec for review |
-| 10 | SEO and LLM Discoverability (PR #1, branch `feature/seo-llm-discoverability`) | Built, in review |
+| 10 | SEO and LLM Discoverability (PR #1) | Built, merged |
+| 11 | [Analytics Foundation](analytics-foundation.md) | Scope for review |
 | 20 | [Content System](content-system.md) | Spec for review |
 | 21 | [Access Gating Engine](access-gating-engine.md) | Spec for review |
+| 19 | Stake-gated content | Merged into #20 and #21 (`stake_min` rule on content items) |
 | 22 to 24 | [Fan Loyalty: Fan Graph, Rewards Programs, Superfans](fan-loyalty.md) | Overview for review |
 
 ## Shared contract
