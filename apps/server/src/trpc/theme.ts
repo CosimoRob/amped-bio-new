@@ -15,7 +15,7 @@ import { privateProcedure, router } from "./trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { s3Service } from "../services/S3Service";
-import { themeConfigSchema, type ThemeConfig } from "@repo/constants";
+import { themeConfigSchema } from "@repo/constants";
 import { getFileUrl } from "../utils/fileUrlResolver";
 import { prisma } from "../services/DB";
 
@@ -258,49 +258,11 @@ export const themeRouter = router({
     const { themeId, theme } = input;
 
     try {
-      // Get current user to check for existing theme
-      const currentUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { theme: true },
-      });
-
-      // If user has a current theme, check if it belongs to them and has a background file to delete
-      if (currentUser?.theme) {
-        const currentThemeId = parseInt(currentUser.theme);
-        const currentTheme = await prisma.theme.findUnique({
-          where: { id: currentThemeId },
-          select: { config: true, user_id: true },
-        });
-
-        // Only delete file if the theme belongs to the current user and has a background file
-        if (currentTheme?.config && currentTheme.user_id === userId) {
-          try {
-            const themeConfig = currentTheme.config as ThemeConfig;
-            const backgroundFileId = themeConfig?.background?.fileId;
-
-            if (backgroundFileId) {
-              const uploadedFile = await prisma.uploadedFile.findUnique({
-                where: { id: backgroundFileId },
-                select: { s3_key: true, status: true },
-              });
-
-              if (uploadedFile && uploadedFile.status !== "DELETED") {
-                // Delete from S3
-                await s3Service.deleteFile(uploadedFile.s3_key);
-
-                // Update database status to DELETED
-                await prisma.uploadedFile.update({
-                  where: { id: backgroundFileId },
-                  data: { status: "DELETED", updated_at: new Date() },
-                });
-              }
-            }
-          } catch (deleteError) {
-            console.error("Error deleting current theme background file:", deleteError);
-            // Continue with theme application even if deletion fails
-          }
-        }
-      }
+      // Applying a theme never deletes files. The creator's previous background
+      // (uploaded image or video) is left in place so the previous theme can be
+      // restored, and because the same file can still be referenced by the
+      // creator's own theme row that is about to be overwritten below.
+      // Unreferenced uploads should be removed by a separate cleanup job, not here.
 
       let themeToApply;
       let themeIdToStore = themeId;
