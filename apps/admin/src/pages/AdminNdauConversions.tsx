@@ -5,13 +5,7 @@ import { useChainId } from "wagmi";
 import { getCurrencySymbol, libertasTestnet } from "@repo/web3";
 import { NDAU_GROUP_LABELS } from "@repo/constants";
 import { createWalletClient, custom, parseEther, type Address } from "viem";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@repo/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import { Badge } from "@repo/ui";
 import { Switch } from "@repo/ui";
 import { Input } from "@repo/ui";
@@ -25,11 +19,44 @@ import {
   Download,
   Wallet,
   ClipboardCheck,
+  AlertTriangle,
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { RouterOutputs } from "@repo/ui";
 import { formatHandle } from "@repo/ui";
+
+type Conversion = RouterOutputs["ndauConversion"]["getAllConversions"][number];
+
+// A hash for a transfer that was sent but not yet recorded on the server is kept in
+// localStorage until the server confirms it. It is the only local copy of a real
+// payment, so it survives reloads and closed dialogs.
+const UNRECORDED_TX_KEY = (conversionId: number) =>
+  `ampedbio.admin.ndauConversion.unrecordedTx.${conversionId}`;
+
+function readUnrecordedTx(conversionId: number): string | null {
+  try {
+    return window.localStorage.getItem(UNRECORDED_TX_KEY(conversionId));
+  } catch {
+    return null;
+  }
+}
+
+function writeUnrecordedTx(conversionId: number, hash: string): void {
+  try {
+    window.localStorage.setItem(UNRECORDED_TX_KEY(conversionId), hash);
+  } catch {
+    // Storage can be unavailable (private mode). The hash is still shown on screen.
+  }
+}
+
+function clearUnrecordedTx(conversionId: number): void {
+  try {
+    window.localStorage.removeItem(UNRECORDED_TX_KEY(conversionId));
+  } catch {
+    // ignore
+  }
+}
 
 export const AdminNdauConversions: FC = () => {
   const chainId = useChainId();
@@ -41,8 +68,6 @@ export const AdminNdauConversions: FC = () => {
     error,
     refetch,
   } = useQuery(trpc.ndauConversion.getAllConversions.queryOptions());
-
-  const queryClient = useQueryClient();
 
   const [showFullData, setShowFullData] = useState(false);
 
@@ -60,6 +85,11 @@ export const AdminNdauConversions: FC = () => {
   const [isMetaMaskConnected, setIsMetaMaskConnected] = useState(false);
   const [metaMaskAddress, setMetaMaskAddress] = useState<string | null>(null);
   const [isSendingTx, setIsSendingTx] = useState(false);
+  // Hash of a transfer sent from this dialog. Once set, Send is never offered again
+  // for this request; the only action left is recording it.
+  const [sentTxHash, setSentTxHash] = useState<string | null>(null);
+  const [recordFailed, setRecordFailed] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const [isMarkCompletedOpen, setIsMarkCompletedOpen] = useState(false);
   const [txidInput, setTxidInput] = useState("");
@@ -69,22 +99,48 @@ export const AdminNdauConversions: FC = () => {
 
   const confirmMutation = useMutation({
     mutationFn: trpc.ndauConversion.confirmConversionTxid.mutationOptions().mutationFn,
-    onSuccess: () => {
+    // A network blip must not leave a sent payment unrecorded. The server call is
+    // idempotent for the same txid, so retrying is safe.
+    retry: 3,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 8000),
+    onSuccess: (_data, variables) => {
+      clearUnrecordedTx(variables.id);
       toast.success(`Conversion confirmed! TXID recorded.`);
       setIsProcessDialogOpen(false);
       setSelectedConversion(null);
+      setSentTxHash(null);
+      setRecordFailed(false);
       setIsMetaMaskConnected(false);
       setMetaMaskAddress(null);
       refetch();
     },
-    onError: err => {
-      toast.error(`Failed to confirm conversion: ${err.message}`);
+    onError: (err, variables) => {
+      // Keep the hash (already in localStorage) and switch the dialog to the
+      // "sent but not recorded" state. Never offer Send again.
+      setRecordFailed(true);
+      toast.error(
+        `Sent but not recorded: ${err.message}. Do not send again. Record the transaction to finish.`
+      );
+      console.error("Failed to record conversion txid", { id: variables.id, txid: variables.txid });
+      refetch();
+    },
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: trpc.ndauConversion.claimConversionForProcessing.mutationOptions().mutationFn,
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: trpc.ndauConversion.releaseConversionClaim.mutationOptions().mutationFn,
+    onSettled: () => {
+      refetch();
     },
   });
 
   const markCompletedMutation = useMutation({
     mutationFn: trpc.ndauConversion.markConversionCompleted.mutationOptions().mutationFn,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      clearUnrecordedTx(variables.id);
       toast.success("Conversion marked as completed!");
       setIsMarkCompletedOpen(false);
       setSelectedConversionForMark(null);
@@ -120,32 +176,59 @@ export const AdminNdauConversions: FC = () => {
     }
   };
 
-  const handleProcessClick = async (
-    conversion: RouterOutputs["ndauConversion"]["getAllConversions"][number]
-  ) => {
+  const handleProcessClick = async (conversion: Conversion) => {
+    // Lock the request on the server before any wallet opens. Only one admin wins.
+    setIsClaiming(true);
     try {
-      const latest = await queryClient.fetchQuery(
-        trpc.ndauConversion.getConversionById.queryOptions({ id: conversion.id })
-      );
-      if (latest.txid || latest.status !== "pending") {
-        toast.error(
-          latest.status === "processing"
-            ? "This conversion is currently being processed"
-            : "This conversion has already been processed"
-        );
-        return;
-      }
+      await claimMutation.mutateAsync({ id: conversion.id });
     } catch (err) {
       toast.error(
-        `Failed to check conversion status: ${err instanceof Error ? err.message : "Unknown error"}`
+        err instanceof Error ? err.message : "This conversion is already being processed"
       );
+      refetch();
       return;
+    } finally {
+      setIsClaiming(false);
     }
 
     setSelectedConversion(conversion);
+    setSentTxHash(null);
+    setRecordFailed(false);
     setIsMetaMaskConnected(false);
     setMetaMaskAddress(null);
     setIsProcessDialogOpen(true);
+    refetch();
+  };
+
+  // Closing the dialog before anything was sent hands the request back to the queue.
+  // After a send, the claim stays: the row shows Record transaction instead of Process.
+  const closeProcessDialog = () => {
+    if (isSendingTx || confirmMutation.isPending) return;
+    if (selectedConversion && !sentTxHash) {
+      releaseMutation.mutate({ id: selectedConversion.id });
+    }
+    setIsProcessDialogOpen(false);
+    setSelectedConversion(null);
+    setSentTxHash(null);
+    setRecordFailed(false);
+  };
+
+  const recordStoredTx = (conversionId: number, hash: string) => {
+    confirmMutation.mutate({ id: conversionId, txid: hash });
+  };
+
+  const handleReleaseClick = (conversion: Conversion) => {
+    const ok = window.confirm(
+      "Release this request back to Pending?\n\nOnly do this if no transfer was sent. Check the admin wallet on the explorer first. If a transfer was sent, use Mark Completed with its hash instead."
+    );
+    if (!ok) return;
+    releaseMutation.mutate(
+      { id: conversion.id },
+      {
+        onSuccess: () => toast.success("Released back to Pending"),
+        onError: err => toast.error(err.message),
+      }
+    );
   };
 
   const handleMetaMaskSend = async () => {
@@ -169,6 +252,11 @@ export const AdminNdauConversions: FC = () => {
         value: parseEther(selectedConversion.revoAmount),
       });
 
+      // Persist the hash before anything else can fail. From here on the transfer
+      // is real and must be recorded, never re-sent.
+      writeUnrecordedTx(selectedConversion.id, hash);
+      setSentTxHash(hash);
+
       toast.success("Transaction submitted. Recording TXID...");
 
       confirmMutation.mutate({
@@ -188,11 +276,9 @@ export const AdminNdauConversions: FC = () => {
     }
   };
 
-  const handleMarkCompletedClick = (
-    conversion: RouterOutputs["ndauConversion"]["getAllConversions"][number]
-  ) => {
+  const handleMarkCompletedClick = (conversion: Conversion, prefillTxid?: string) => {
     setSelectedConversionForMark(conversion);
-    setTxidInput("");
+    setTxidInput(prefillTxid ?? "");
     setIsMarkCompletedOpen(true);
   };
 
@@ -510,9 +596,62 @@ export const AdminNdauConversions: FC = () => {
                     {new Date(conversion.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {conversion.status === "pending" ? (
+                    {conversion.status === "processing" && !conversion.txid ? (
+                      // Claimed but no transaction recorded on the server. Either a send is
+                      // in progress, or it was sent and recording failed. Never offer Process.
                       <div className="flex items-center gap-2">
-                        <Button size="sm" onClick={() => handleProcessClick(conversion)}>
+                        {readUnrecordedTx(conversion.id) ? (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              recordStoredTx(conversion.id, readUnrecordedTx(conversion.id)!)
+                            }
+                            disabled={confirmMutation.isPending}
+                            title={readUnrecordedTx(conversion.id) ?? ""}
+                          >
+                            Record transaction
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReleaseClick(conversion)}
+                            disabled={releaseMutation.isPending}
+                          >
+                            Release
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleMarkCompletedClick(
+                              conversion,
+                              readUnrecordedTx(conversion.id) ?? undefined
+                            )
+                          }
+                        >
+                          <ClipboardCheck className="h-4 w-4 mr-1" />
+                          Mark Completed
+                        </Button>
+                      </div>
+                    ) : conversion.status === "processing" && conversion.txid ? (
+                      // Recorded, on-chain validation still pending. Re-validate with the same hash.
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMarkCompletedClick(conversion, conversion.txid!)}
+                      >
+                        <ClipboardCheck className="h-4 w-4 mr-1" />
+                        Validate
+                      </Button>
+                    ) : conversion.status === "pending" ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleProcessClick(conversion)}
+                          disabled={isClaiming}
+                        >
                           Process
                         </Button>
                         <Button
@@ -540,7 +679,12 @@ export const AdminNdauConversions: FC = () => {
       )}
 
       {/* Process Dialog */}
-      <Dialog open={isProcessDialogOpen} onOpenChange={setIsProcessDialogOpen}>
+      <Dialog
+        open={isProcessDialogOpen}
+        onOpenChange={open => {
+          if (!open) closeProcessDialog();
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Process Conversion via MetaMask</DialogTitle>
@@ -639,38 +783,96 @@ export const AdminNdauConversions: FC = () => {
                     </div>
                   </div>
 
+                  {sentTxHash && (
+                    <div
+                      role={recordFailed ? "alert" : "status"}
+                      className={
+                        recordFailed
+                          ? "flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+                          : "flex gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
+                      }
+                    >
+                      {recordFailed ? (
+                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+                      ) : (
+                        <Loader2 className="h-4 w-4 shrink-0 mt-0.5 animate-spin" aria-hidden />
+                      )}
+                      <div className="space-y-1 min-w-0">
+                        <p className="font-semibold">
+                          {recordFailed
+                            ? "Sent but not recorded"
+                            : "Sent. Recording the transaction"}
+                        </p>
+                        {recordFailed && (
+                          <p>Do not send again. Record this transaction to finish.</p>
+                        )}
+                        <a
+                          href={`https://libertas.revoscan.io/tx/${sentTxHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs break-all underline"
+                        >
+                          {sentTxHash}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
                   <DialogFooter>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setIsProcessDialogOpen(false)}
+                      onClick={closeProcessDialog}
                       disabled={isSendingTx || confirmMutation.isPending}
                     >
-                      Cancel
+                      {sentTxHash ? "Close" : "Cancel"}
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={handleMetaMaskSend}
-                      disabled={isSendingTx || confirmMutation.isPending}
-                      variant="confirm"
-                    >
-                      {isSendingTx ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : confirmMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Confirming...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send {currencySymbol}
-                        </>
-                      )}
-                    </Button>
+                    {sentTxHash ? (
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          selectedConversion && recordStoredTx(selectedConversion.id, sentTxHash)
+                        }
+                        disabled={confirmMutation.isPending}
+                        variant="confirm"
+                      >
+                        {confirmMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Recording...
+                          </>
+                        ) : (
+                          <>
+                            <ClipboardCheck className="h-4 w-4 mr-2" />
+                            Record transaction
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={handleMetaMaskSend}
+                        disabled={isSendingTx || confirmMutation.isPending}
+                        variant="confirm"
+                      >
+                        {isSendingTx ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : confirmMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Confirming...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send {currencySymbol}
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </DialogFooter>
                 </div>
               )}

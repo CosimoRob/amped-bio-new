@@ -3,6 +3,7 @@ import { User, ChevronLeft, ChevronRight } from "lucide-react";
 import UserSkeleton from "./UserSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@repo/ui";
+import { htmlToPlainText } from "@repo/constants";
 
 // Define filter and sort types
 type UserFilter = "all" | "active-7-days" | "has-creator-pool";
@@ -131,10 +132,9 @@ const UsersTab: React.FC<UsersTabProps> = ({
                   </div>
 
                   <p className="text-sm text-gray-500 mb-2">@{user.username}</p>
-                  <div
-                    className="text-sm text-gray-600 mb-4 line-clamp-2"
-                    dangerouslySetInnerHTML={{ __html: user.bio }}
-                  />
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    {htmlToPlainText(user.bio)}
+                  </p>
 
                   <div className="flex space-x-2">
                     <button

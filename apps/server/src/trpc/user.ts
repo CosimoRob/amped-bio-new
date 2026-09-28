@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { prisma } from "../services/DB";
 import { editUserSchema } from "../schemas/user.schema";
 import Decimal from "decimal.js";
+import { htmlToPlainText, sanitizeRichHtml } from "@repo/constants";
 
 // Schema for initiating email change
 const initiateEmailChangeSchema = z.object({
@@ -59,7 +60,8 @@ export const userRouter = router({
         where: { id: userId },
         data: {
           name,
-          description,
+          // Bio HTML is stored only after the shared allowlist sanitizer runs
+          description: description == null ? description : sanitizeRichHtml(description),
           revo_name,
           theme: `${theme}`,
           image,
@@ -481,7 +483,8 @@ export const userRouter = router({
           displayName: user.name,
           username: user.handle || "",
           avatar: user.image,
-          bio: user.description || "",
+          // Explore cards show the bio as plain text; no creator HTML renders there
+          bio: htmlToPlainText(user.description),
           banner: null, // Placeholder
           category: "uncategorized",
         })),

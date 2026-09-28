@@ -8,9 +8,11 @@ interface ReferralBlockProps {
   block: ReferralBlock;
   theme: ThemeConfig;
   pageOwnerId: number;
+  // True inside the editor preview: the click must not set a referral cookie or navigate
+  isPreview?: boolean;
 }
 
-export function ReferralBlock({ theme, pageOwnerId }: ReferralBlockProps) {
+export function ReferralBlock({ theme, pageOwnerId, isPreview = false }: ReferralBlockProps) {
   const { data: refereeRewardData, isLoading } = useQuery(
     trpc.referral.getRefereeReward.queryOptions(undefined, {
       retry: 1,
@@ -39,7 +41,9 @@ export function ReferralBlock({ theme, pageOwnerId }: ReferralBlockProps) {
 
   return (
     <button
-      onClick={() => handleReferrerClick(pageOwnerId)}
+      onClick={() => {
+        if (!isPreview) handleReferrerClick(pageOwnerId);
+      }}
       className="w-full px-4 py-3 flex items-center justify-center space-x-2 rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
       style={{
         backgroundColor: theme.buttonColor,

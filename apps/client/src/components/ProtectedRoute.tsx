@@ -29,7 +29,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Must use window.location.href for cross-origin navigations since history.replaceState
   // cannot change domains (app.amped.bio -> amped.bio)
   if (authUser === null) {
-    window.location.href = `${import.meta.env.VITE_LANDING_URL}/login`;
+    // Send the person back to the exact editor URL after sign in, so deep links such
+    // as /explore?t=pools&pa=<address> (the Stake link on public pool pages) survive
+    const returnTo = encodeURIComponent(window.location.href);
+    window.location.href = `${import.meta.env.VITE_LANDING_URL}/login?redirect=${returnTo}`;
     return null;
   }
 
