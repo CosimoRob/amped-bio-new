@@ -4,8 +4,9 @@ import { getFileUrl } from "../utils/fileUrlResolver";
 import { ThemeConfig } from "@repo/constants";
 import { prisma } from "../services/DB";
 import { z } from "zod";
-import { HANDLE_MIN_LENGTH, HANDLE_REGEX } from "@repo/constants";
+import { HANDLE_MIN_LENGTH, HANDLE_REGEX, sanitizeRichHtml } from "@repo/constants";
 import { env } from "../env";
+import { sanitizeBlockConfig } from "../utils/sanitizeBlockConfig";
 import { logger } from "better-auth";
 import { indexableUserWhere, isUserIndexable } from "../utils/indexable";
 
@@ -201,7 +202,7 @@ const appRouter = router({
         type: block.type,
         order: block.order,
         clicks: block.clicks,
-        config: block.config,
+        config: sanitizeBlockConfig(block.type, block.config),
         created_at: block.created_at,
         updated_at: block.updated_at,
       }));
@@ -293,7 +294,8 @@ const appRouter = router({
           revoName: resolvedRevoName,
           revoNameStatus,
           originalRevoName: revo_name ?? null,
-          description,
+          // Sanitized on read as well as on save, so bios stored before the sanitizer are safe
+          description: description ? sanitizeRichHtml(description) : description,
           image: resolvedImageUrl,
         },
         theme: publicTheme,
