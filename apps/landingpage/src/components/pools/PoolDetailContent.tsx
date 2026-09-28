@@ -9,6 +9,7 @@ import { useReadContract } from "wagmi";
 import { formatEther, type Address } from "viem";
 import { getChainConfig, CREATOR_POOL_ABI } from "@repo/web3";
 import { formatHandle } from "@/lib/handle";
+import { getPanelPoolUrl } from "@/lib/panel";
 import { formatNumberWithSeparators } from "@/utils/numberUtils";
 
 interface PoolDetailContentProps {
@@ -320,7 +321,7 @@ const PoolDetailContent: React.FC<PoolDetailContentProps> = ({
 
               {/* Stake CTA */}
               <a
-                href={`${process.env.NEXT_PUBLIC_PANEL_URL || ""}/i/pools/${pool.address}`}
+                href={getPanelPoolUrl(pool.address)}
                 className="inline-flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors duration-200 shadow-sm"
               >
                 <span>Stake in this Pool</span>
