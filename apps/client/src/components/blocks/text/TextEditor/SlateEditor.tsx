@@ -54,6 +54,11 @@ interface RichTextEditorProps {
   debounceTime?: number;
 }
 
+// Typed text is text, never markup. Without this, typing <img onerror=...> in the
+// editor produced live HTML. The deserializer (DOMParser) decodes these back to text.
+const escapeHtmlText = (text: string): string =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 // Function to convert Slate nodes to HTML string
 const slateToHtml = (nodes: Descendant[]): string => {
   return nodes
@@ -98,7 +103,7 @@ const slateToHtml = (nodes: Descendant[]): string => {
       }
 
       // Handle text nodes with formatting
-      let text = node.text;
+      let text = escapeHtmlText(node.text);
       if (node.bold) text = `<strong>${text}</strong>`;
       if (node.italic) text = `<em>${text}</em>`;
       if (node.underline) text = `<u>${text}</u>`;
