@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, privateProcedure, adminProcedure } from "../trpc/trpc";
 import {
   calculateRevoAmount,
@@ -108,6 +109,19 @@ async function validateConversionTxid(
   const result = results[0];
   if (!result.success) {
     throw new Error(result.error ?? "Validation failed");
+  }
+}
+
+/**
+ * A conversion pays out once. Once a txid is recorded, only that same txid may be
+ * submitted again (retries); any other hash means a second payment and is refused.
+ */
+function assertNoOtherTxidRecorded(recordedTxid: string | null, incomingTxid: string): void {
+  if (recordedTxid && recordedTxid.toLowerCase() !== incomingTxid.toLowerCase()) {
+    throw new TRPCError({
+      code: "CONFLICT",
+      message: `A different transaction is already recorded for this conversion: ${recordedTxid}`,
+    });
   }
 }
 
@@ -474,8 +488,58 @@ export const ndauConversionRouter = router({
   }),
 
   /**
+   * Lock a pending conversion before the admin's wallet opens (admin only).
+   * Atomic: only one admin can move a request from pending to processing, so two
+   * admins can never both send for the same request. A processing row with no txid
+   * means "claimed, send in progress or interrupted".
+   */
+  claimConversionForProcessing: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const claimed = await prisma.ndauConversion.updateMany({
+        where: { id: input.id, status: "pending", txid: null },
+        data: { status: "processing", updated_at: new Date() },
+      });
+
+      if (claimed.count === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "This conversion is already being processed or has been processed",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Return a claimed conversion to pending (admin only). Allowed only while no
+   * transaction hash is recorded, i.e. the admin cancelled or the wallet declined
+   * before anything was sent.
+   */
+  releaseConversionClaim: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const released = await prisma.ndauConversion.updateMany({
+        where: { id: input.id, status: "processing", txid: null },
+        data: { status: "pending", updated_at: new Date() },
+      });
+
+      if (released.count === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "This conversion has a recorded transaction or is no longer processing, so it cannot be released",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  /**
    * Confirm a conversion txid from MetaMask (admin only)
-   * Saves txid immediately with "processing" status, then validates on-chain
+   * Saves txid immediately with "processing" status, then validates on-chain.
+   * Idempotent for the same txid, so the admin UI can safely retry after a failed
+   * call. A different txid never overwrites one that is already recorded.
    */
   confirmConversionTxid: adminProcedure
     .input(
@@ -505,13 +569,28 @@ export const ndauConversionRouter = router({
         );
       }
 
-      const updatedConversion = await prisma.ndauConversion.update({
-        where: { id },
+      assertNoOtherTxidRecorded(conversion.txid, txid);
+
+      // Write only if no txid is recorded yet, or the same one is (a retry).
+      // Guards against a race with another admin between the read above and this write.
+      const written = await prisma.ndauConversion.updateMany({
+        where: { id, OR: [{ txid: null }, { txid }] },
         data: {
           txid,
           status: "processing",
           updated_at: new Date(),
         },
+      });
+
+      if (written.count === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A different transaction is already recorded for this conversion",
+        });
+      }
+
+      const updatedConversion = await prisma.ndauConversion.findUniqueOrThrow({
+        where: { id },
       });
 
       try {
@@ -586,6 +665,9 @@ export const ndauConversionRouter = router({
           `Conversion cannot be processed in its current state: ${conversion.status}`
         );
       }
+
+      assertNoOtherTxidRecorded(conversion.txid, txid);
+
       await validateConversionTxid(txid, conversion.revo_address, conversion.revo_amount);
 
       const updatedConversion = await prisma.ndauConversion.update({
