@@ -243,13 +243,18 @@ export const blocksRouter = router({
     }
   }),
 
-  registerClick: publicProcedure.input(blockIdParamSchema).mutation(async ({ input }) => {
+  registerClick: publicProcedure.input(blockIdParamSchema).mutation(async ({ ctx, input }) => {
     const { id } = input;
 
     try {
-      await prisma.block.update({
+      // A signed in creator clicking their own block (editor preview or their own
+      // public page) is not a visitor click. updateMany with a user_id filter skips
+      // the increment in that case without an extra query.
+      const viewerId = ctx.user?.sub;
+      await prisma.block.updateMany({
         where: {
           id: id,
+          ...(viewerId ? { user_id: { not: viewerId } } : {}),
         },
         data: {
           clicks: {
