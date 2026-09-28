@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../services/DB";
 import { TRPCError } from "@trpc/server";
 import { addBlockSchema, blockIdParamSchema, editBlocksSchema } from "@repo/constants";
+import { sanitizeBlockConfig } from "../utils/sanitizeBlockConfig";
 
 export const blocksRouter = router({
   // Get all blocks for the user
@@ -70,7 +71,8 @@ export const blocksRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user!.sub;
-      const { id, type, order, config } = input;
+      const { id, type, order } = input;
+      const config = sanitizeBlockConfig(type, input.config);
 
       try {
         const block = await prisma.block.findUnique({
@@ -118,7 +120,8 @@ export const blocksRouter = router({
 
     try {
       for (let idx = 0; idx < blocks.length; idx++) {
-        const { id, type, config } = blocks[idx];
+        const { id, type } = blocks[idx];
+        const config = sanitizeBlockConfig(type, blocks[idx].config);
 
         const block = await prisma.block.findUnique({
           where: {
@@ -159,7 +162,8 @@ export const blocksRouter = router({
 
   addBlock: privateProcedure.input(addBlockSchema).mutation(async ({ ctx, input }) => {
     const userId = ctx.user!.sub;
-    const { type, config } = input;
+    const { type } = input;
+    const config = sanitizeBlockConfig(type, input.config);
 
     try {
       const result = await prisma.$transaction(async tx => {

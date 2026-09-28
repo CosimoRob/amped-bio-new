@@ -2,7 +2,7 @@ import type { ThemeConfig } from "../../../types/editor";
 import { EmailCollectionBlock } from "../EmailCollectionBlock";
 import { TelegramBlock } from "../TelegramBlock";
 import { TeamBlock } from "../TeamBlock";
-import { TextBlock as TextBlockT } from "@repo/constants";
+import { TextBlock as TextBlockT, sanitizeRichHtml } from "@repo/constants";
 import { isHTML } from "@/utils/htmlutils";
 
 interface TextBlockProps {
@@ -34,7 +34,7 @@ export function TextBlock({ block, theme }: TextBlockProps) {
       {isHTML_ ? (
         <div
           className="text-content"
-          dangerouslySetInnerHTML={{ __html: block.config.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(block.config.content) }}
           style={{
             color: theme.fontColor,
             fontSize: theme.fontSize,

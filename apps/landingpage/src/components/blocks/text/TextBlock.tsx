@@ -1,5 +1,5 @@
 import type { ThemeConfig } from "@repo/constants";
-import { TextBlock as TextBlockT } from "@repo/constants";
+import { TextBlock as TextBlockT, sanitizeRichHtml } from "@repo/constants";
 import { isHTML } from "@/lib/htmlutils";
 import { EmailCollectionBlock } from "@/components/blocks/EmailCollectionBlock";
 import { TelegramBlock } from "@/components/blocks/TelegramBlock";
@@ -32,7 +32,7 @@ export function TextBlock({ block, theme }: TextBlockProps) {
       {isHTML_ ? (
         <div
           className="text-content"
-          dangerouslySetInnerHTML={{ __html: block.config.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(block.config.content) }}
           style={{
             color: theme.fontColor,
             fontSize: theme.fontSize,
