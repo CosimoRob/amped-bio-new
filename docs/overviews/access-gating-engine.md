@@ -16,7 +16,7 @@ Access gating lets a creator lock any link, media or text on their bio so only m
 - Save rules with a name, such as "Inner circle", and reuse them across links, content and broadcasts.
 - See how many current members meet a level before saving the rule.
 - Track views, unlock attempts, unlocks, unlock rate and the top reasons fans were turned away.
-- Paid access, points-based access and follower access appear in the builder as "Later".
+- Paid access and points-based access appear in the builder as "Later". Follower access ("Anyone who follows you on Amped. Free for fans.") shows as "Later" until phase 2, then goes live once Fan Graph (#22) is in production.
 
 **For fans and members**
 
