@@ -23,7 +23,7 @@ One rule engine decides who can open a gated link, content item or broadcast. It
 - **Signing keys.** `apps/server/src/utils/auth.ts` holds an RS256 key pair (`JWT_KEYS`) used by the better-auth `jwt` plugin and published at `/.well-known/jwks.json` (`apps/server/src/routes/well-known.ts`). `jose` is already a dependency.
 - **Files.** `apps/server/src/services/S3Service.ts` already presigns S3 URLs with `@aws-sdk/s3-request-presigner`.
 - **Rewards.** `Referral` records referrer and referred with an optional payout `txid`. The faucet records `UserWallet.last_airdrop_request`. There is no points ledger.
-- **Follows.** No follow graph exists.
+- **Follows.** No follow graph exists at this baseline. Fan Graph (#22, [fan-graph.md](fan-graph.md), upstream PR #267) adds `Follow`, `FollowBlock` and `FollowRemoval`. A follow is ACTIVE while the follower's email is verified and the account is not suspended (`block = "no"`); this is computed at read time, so there is no status column.
 
 ### 1.2 Best in breed
 
@@ -63,8 +63,8 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 
 1. `AccessRule` model, zod params per kind, `accessRuleId` on `Block`.
 2. Engine: `checkAccess`, `checkAccessBatch`, `issueAccessGrant`, `verifyAccessGrant`, resource resolver registry.
-3. Kinds live in v1: `stake_min`, `pool_member`.
-4. Kinds defined but not live: `paid` (via `PaymentVerifier`), `reward_points`, `follower`.
+3. Kinds live in v1: `stake_min`, `pool_member`. `follower` goes live in Phase 2, after Fan Graph (#22) is in production.
+4. Kinds defined but not live: `paid` (via `PaymentVerifier`), `reward_points`.
 5. Gated link redirect `GET /go/:blockId`. Gated media and text reveal via `access.revealBlock`.
 6. Locked block DTO in `handle.getHandle`. Exclusion from JSON-LD, sitemap, `llms.txt` and share previews (Open Graph and X card tags).
 7. Creator rule builder in the block editor. Access rules page with unlock stats.
@@ -75,7 +75,7 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 
 - Payments, checkout and on/off ramps. Rob is building payments in the Revolution Network project. This spec defines `PaymentVerifier` only.
 - A points ledger. Section 3.1.6 states what `reward_points` needs.
-- A follow graph.
+- The follow graph itself. Fan Graph (#22) owns it. This spec reads it.
 - Rule combinators (any/all). Reserved for v2 (Decision 2).
 - External wallets without an Amped account (SIWE). Future.
 - Gating the whole profile.
@@ -167,6 +167,7 @@ export const ACCESS_RULE_KINDS = ["stake_min", "pool_member", "paid", "reward_po
 export type AccessRuleKind = (typeof ACCESS_RULE_KINDS)[number];
 
 // Kinds a creator can create today. Others are defined for the contract and rejected on create.
+// Phase 2 adds "follower" once Fan Graph (#22) is in production.
 export const LIVE_ACCESS_RULE_KINDS: readonly AccessRuleKind[] = ["stake_min", "pool_member"];
 
 export const MIN_GATE_STAKE_WEI = "1000000000000000000"; // 1 REVO platform floor (Decision 4)
@@ -222,9 +223,10 @@ export const ACCESS_REASONS = [
   "no_wallet",
   "stake_below_min",
   "not_pool_member",
+  "not_follower",
   "not_purchased",
   "insufficient_points",
-  "kind_unavailable",  // paid before PaymentVerifier exists, reward_points, follower
+  "kind_unavailable",  // paid before PaymentVerifier exists, reward_points, follower before Phase 2
   "chain_unavailable", // chain read failed and no usable cached value
   "not_found",
 ] as const;
@@ -234,6 +236,7 @@ export type UnlockHint =
   | { action: "none" }
   | { action: "sign_in" }
   | { action: "link_wallet" }
+  | { action: "follow"; creatorHandle: string; pending: boolean }
   | { action: "stake"; chainId: number; poolAddress: string; requiredWei: string; currentWei: string }
   | { action: "purchase"; offerId: string; priceDisplay?: string }
   | { action: "earn_points"; programId: string; requiredPoints: number; currentPoints: number }
@@ -276,7 +279,7 @@ export function registerAccessResourceResolver(type: AccessResource["type"], r: 
 
 - `viewer` is always built on the server from `ctx.user`: `{ userId: ctx.user?.sub ?? null, walletAddress: ctx.user?.wallet ?? null }`. No endpoint accepts a wallet address from the client.
 - `freshness: "render"` accepts a cached stake up to 60 s old and never blocks on the chain for more than 1.5 s. `"open"` requires a value no older than 60 s and waits up to 5 s. Grants and redirects always use `"open"`.
-- `listEligibleUserIds` reads the `StakedPool` mirror. It is for broadcast audience targeting only. Delivery targets it. Opening a gated broadcast still calls `checkAccess`.
+- `listEligibleUserIds` reads the `StakedPool` mirror for `stake_min` and `pool_member`, and `Follow` for `follower` (ACTIVE follows of the rule owner: follower email verified, `block = "no"`, not in `FollowBlock`). It is for broadcast audience targeting only. Delivery targets it. Opening a gated broadcast still calls `checkAccess`.
 
 tRPC router `apps/server/src/trpc/access.ts`, mounted as `access`:
 
@@ -346,7 +349,7 @@ The 5 minute ceiling applies to every file URL issued under a grant. Blur previe
 | `pool_member` | Live | `fanStakes(wallet)` is at least `MIN_GATE_STAKE_WEI` |
 | `paid` | Defined. Returns `kind_unavailable` until a `PaymentVerifier` is registered | `PaymentVerifier.verifyPurchase` |
 | `reward_points` | Defined. Returns `kind_unavailable` | Needs a ledger (below) |
-| `follower` | Future. Create is rejected | Needs a follow graph |
+| `follower` | Defined. Returns `kind_unavailable` until Phase 2. Live in Phase 2 after Fan Graph (#22) ships | An ACTIVE `Follow` from the viewer to the rule owner. `params` stays empty. Pending, removed and blocked follows fail with `not_follower`. No wallet needed |
 
 Build check: confirm in integration tests that `CreatorPool.fanStakes` reflects stakes made through `L2_BASE_TOKEN.stake`. If it does not, read the L2 base token instead. The engine hides this behind `readFanStake(chainId, pool, wallet)`.
 
@@ -387,7 +390,7 @@ Default is `NullPaymentVerifier`. It returns `not_purchased` and `available: fal
 
 ### 3.2 Screens
 
-**Creator rule builder in the block editor.** A "Who can open this?" panel on each link, media or text block. Everyone, Pool members, Members with a minimum stake. Paid, Points and Followers show as disabled with the label "Later" and no date. The panel shows how many current members meet the level (from the mirror) and a compliance note. Saving creates or reuses a named rule.
+**Creator rule builder in the block editor.** A "Who can open this?" panel on each link, media or text block. Everyone, Followers, Pool members, Members with a minimum stake. Followers carries the helper "Anyone who follows you on Amped. Free for fans." and shows as disabled with "Later" until Phase 2. Paid and Points show as disabled with the label "Later" and no date. The panel shows how many current members meet the level (from the mirror) and a compliance note. Saving creates or reuses a named rule.
 
 ![Rule builder](img/access-gating-engine-rule-builder.png)
 
@@ -395,7 +398,7 @@ Default is `NullPaymentVerifier`. It returns `not_purchased` and `available: fal
 
 ![Locked bio](img/access-gating-engine-locked-bio.png)
 
-**Fan unlock flow.** A bottom sheet. Step 1 sign in and link a wallet if needed. Step 2 server check. Step 3a open. Step 3b shows current stake against the level, the required disclosure and a link to the pool page. For `stake_min` and `pool_member` rules the disclosure shows in every step of the sheet (3.9). No yield, APY or pool performance figures near the gate.
+**Fan unlock flow.** A bottom sheet. Step 1 sign in and link a wallet if needed. Step 2 server check. Step 3a open. Step 3b shows current stake against the level, the required disclosure and a link to the pool page. For `stake_min` and `pool_member` rules the disclosure shows in every step of the sheet (3.9). No yield, APY or pool performance figures near the gate. For `follower` rules, step 1 is sign in only (no wallet), and step 3b shows Follow {name}, which runs the Fan Graph follow flow (first-follow sheet on a first follow). While the follow is pending the sheet says "Confirm your email to open this." The `follower` sheet shows no stake disclosure, and the free Follow is never described as a reward or a purchase.
 
 ![Unlock flow](img/access-gating-engine-unlock-flow.png)
 
@@ -415,6 +418,9 @@ checkAccess(viewer, resource, freshness):
   rule = getRule(gate.accessRuleId)                           // Redis 5 min, purged on update
   if kind not live (or paid with Null verifier) -> deny "kind_unavailable"
   if viewer.userId == null            -> deny "not_signed_in", hint sign_in
+  if kind == follower:
+    f = activeFollow(viewer.userId, gate.ownerUserId)        // email verified, block "no", not blocked
+    pass = f exists; deny reason "not_follower", hint follow {creatorHandle, pending}
   if viewer.walletAddress == null     -> deny "no_wallet", hint link_wallet
   switch kind:
     stake_min, pool_member:
@@ -534,7 +540,7 @@ One list covers product copy and marketing. It matches the business overview's "
 ### 3.10 Acceptance criteria
 
 1. A creator can create a `stake_min` or `pool_member` rule only for their own pool and attach it to a link, media or text block.
-2. `rules.create` rejects `follower` and `reward_points`, and rejects `paid` while `NullPaymentVerifier` is active.
+2. `rules.create` rejects `reward_points`, rejects `paid` while `NullPaymentVerifier` is active, and rejects `follower` until Phase 2.
 3. A signed out visitor sees the locked card. The page HTML, the `getHandle` response, the JSON-LD, the Open Graph and X card tags, the sitemap and `llms.txt` contain no destination URL, domain or text content of the gated block.
 4. A member at or above the level opens the link through `/go` in under 2 s at p95 with a warm cache.
 5. A member below the level sees current stake, required stake, the required disclosure and a link to the pool page.
@@ -544,12 +550,13 @@ One list covers product copy and marketing. It matches the business overview's "
 9. The rules page shows views, attempts, unlocks, unlock rate and top denial reasons. No emails. Wallets are truncated.
 10. No em dashes or en dashes in any shipped copy.
 11. `pnpm run typecheck` and `pnpm run build` pass. Unit tests cover each kind, the batch path, grant verification failures and the SSR leak test.
-12. The rule builder shows Paid, Points and Followers as disabled with "Later" and no date.
+12. The rule builder shows Paid and Points as disabled with "Later" and no date. Followers shows as disabled with "Later" until Phase 2, then live.
 13. For `stake_min` and `pool_member` rules, `ACCESS_STAKE_DISCLOSURE` shows in every step of the unlock sheet. The pool link opens the pool page and never starts a stake transaction.
 14. `scripts/check-compliance-copy.ts` finds no term from `ACCESS_BANNED_TERMS` and no em or en dash on gating surfaces. Any match fails the build. Only `ACCESS_STAKE_DISCLOSURE` is exempt.
 15. `handle.getHandle` returns no creator email (D1 fix) before any public gating post.
 16. On staging, every server event in 3.8 is written, and each KPI in the KPI to event table computes from those events. Repeated attempts on one resource by one viewer within 10 minutes count once.
 17. The nightly leak scan runs in production and reports `leaksFound = 0`.
+18. Phase 2: a `follower` rule opens for an ACTIVE follower without a wallet, and denies a pending, removed or blocked follower with `not_follower`. `listEligibleUserIds` for a `follower` rule returns the same set as the creator's Followers list.
 
 ### 3.11 Phased rollout
 
@@ -559,9 +566,9 @@ Timings follow the business overview launch plan. All dates are proposed.
 |---|---|---|---|
 | 0 | October to November 2026 (proposed) | Counsel review of rule types, copy and the stats screen. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry, `compliance.ts` list and disclosure. D1 email fix in `handle.getHandle`. Recruit 10 pilot creators with counsel-approved outreach copy. | Counsel sign off. D1 fix live. Sibling spec owners confirm contract. |
 | 1 | December 2026, after counsel sign off (proposed) | Engine with `stake_min` and `pool_member`. Link blocks only. `/go`. Locked DTO. SEO and share preview exclusions. Rule builder. Analytics events from 3.8 and the compliance copy check, so 90-day KPIs start at launch. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist of the 10 pilot creators. | Counsel sign off recorded. SSR leak test green and nightly leak scan clean before any public post. |
-| 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, and stake-gated content, formerly #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. | Pilot unlock rate and error rate reviewed. |
+| 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, and stake-gated content, formerly #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. `follower` kind live, open to every creator (no pool needed), once Fan Graph (#22) is in production. | Pilot unlock rate and error rate reviewed. Fan Graph (#22) in production. |
 | 3 | Later, no date | `paid` via the Revolution payments `PaymentVerifier` (#16, #18). `reward_points` ledger (#17). | Payments shipped. Counsel review of points and paid copy. |
-| 4 | Later, no date | Combinators (`any`, `all`). SIWE for external wallets. `follower` once a follow graph exists. | Demand from creators. |
+| 4 | Later, no date | Combinators (`any`, `all`). SIWE for external wallets. | Demand from creators. |
 
 Gating ships before any members-only content or gated broadcast. Those features depend on Phase 1 being live and on the counsel sign off above.
 
@@ -584,5 +591,7 @@ Gating ships before any members-only content or gated broadcast. Those features 
 - Gumroad, License keys: https://gumroad.com/help/article/76-license-keys
 
 ## Revision log
+
+2026-10-03: Fan Graph (#22) edits. `follower` moves from Phase 4 to Phase 2 and reads `Follow` (ACTIVE = verified email, not suspended, not blocked). Added `not_follower` reason and `follow` unlock hint. Followers sits in the rule builder between Everyone and Pool members. `listEligibleUserIds` gains a Follow resolver. Acceptance 2 and 12 updated, 18 added.
 
 2026-09-26: aligned with business overview (added overview link; D1 email exposure noted and made a launch gate; share preview exclusion and a nightly leak scan added; builder labels set to "Later" with Points in place of Reward points; unlock sheet shows the disclosure in every step for stake rules; banned words, approved alternatives, disclosure, placement, privacy, later features and FTC rules matched to the overview as one product plus marketing list; build-time copy check added; stream exception and CloudFront wording aligned with the content spec; attempt dedupe, `intent` on `access.check`, `pool_visit`, adoption snapshot and leak scan events plus a KPI to event table added; phases given proposed timings, counsel and D1 gates and the gating before members-only content dependency; acceptance criteria 12 to 17 added and 3, 5 and 9 tightened).
