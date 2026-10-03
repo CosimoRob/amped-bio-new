@@ -29,13 +29,13 @@ Broadcast gives every creator a direct, one-way line to the members of their cre
 
 - A weekly reason for fans to return to Amped, and a reason for creators to grow their pools.
 - A counsel-approved word list holds any message that mentions returns, yield or price for admin review. Every creator's first broadcast is reviewed too.
-- Rate limits of 3 broadcasts per pool per 24 hours and 10 per 7 days. Sending pauses automatically on high reports or complaints.
+- Rate limits of 3 broadcasts per creator per 24 hours and 10 per 7 days, across members and followers. Sending pauses automatically on high reports or complaints.
 - A separate sending domain keeps login and password emails safe if broadcast mail draws complaints.
 - The inbox becomes the base for two-way messaging (Build Board item #2).
 
 ## How it works
 
-1. The creator opens Broadcast in the editor. Only pool owners see it.
+1. The creator opens Broadcast in the editor. Pool owners see it at launch. From phase 2, after Fan Graph (#22), creators with followers see it too, as a tab in People.
 2. They pick an audience: all members, or members who meet an access rule. Amped shows how many members match and how many will get email.
 3. They write the update. A content check highlights banned phrases as they type.
 4. They preview, send a test, then send now or schedule.
@@ -132,10 +132,10 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 
 **Open decisions for Rob**
 
-1. **Audience in v1.** Recommended: pool members only, since followers do not exist yet.
+1. **Audience.** Recommended: pool members at launch. Followers join in phase 2, after Fan Graph (#22) is in production, so creators without a pool can send to their followers too.
 2. **Email consent.** Recommended: explicit opt in, with an unticked box at join and a toggle in the inbox.
 3. **Flagged content.** Recommended: hold flagged broadcasts for admin review, with the option to edit and send at once.
-4. **Rate limits.** Recommended: 3 broadcasts per pool per 24 hours, 10 per 7 days, and admin review of each creator's first broadcast.
+4. **Rate limits.** Recommended: 3 broadcasts per creator per 24 hours, 10 per 7 days, and admin review of each creator's first broadcast.
 5. **Access after leaving.** Recommended: members who unstake keep the text already delivered, but attachments lock.
 6. **Email provider.** Recommended: Amazon SES or Postmark on a dedicated send.amped.bio stream with bounce and complaint feedback.
 7. **Stats detail.** Recommended: totals only, with no per-member read, click or unsubscribe data.
