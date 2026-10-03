@@ -49,7 +49,7 @@ Most of the explorer already exists. This document is a gap analysis plus the ta
 
 **Editor** (`apps/client/src/components/panels`)
 
-- `explore/ExplorePanel.tsx`: tabs Users, Pools, NFTs (NFTs is a stub). Pool sort offers only `newest`, `name-asc`, `name-desc`, while the server supports five.
+- `explore/ExplorePanel.tsx`: tabs Users, Pools, NFTs (NFTs is a stub). Since then, NFTs is gone (Screen Review 045, #257) and Fan Graph (#22, PR #267) adds a third tab, Following, behind `VITE_FAN_GRAPH`: the creators a fan follows, with per creator public list and email settings. Pool sort offers only `newest`, `name-asc`, `name-desc`, while the server supports five.
 - `explore/components/PoolsTab.tsx`: clicking a pool navigates away to the public site.
 - `explore/StakeModal.tsx`, `UnstakeModal.tsx`, `PoolDetailContent.tsx`, `ExplorePoolDetailsModal.tsx` duplicate the public components with small differences. The editor version carries an APR popover that calls the figure "an instantaneous estimate of the annualized return".
 - `leaderboard/LeaderboardPanel.tsx` renders hardcoded mock pools with made-up APR values (12.5%, 8.5%, 15.2%). It is not wired to any data.
@@ -92,7 +92,7 @@ Most of the explorer already exists. This document is a gap analysis plus the ta
 4. A Pools, Creators, Activity tab structure, with a network selector ready for mainnet.
 5. Categories, one per pool, chosen by the creator.
 6. A "Rising" view based on 30-day staker growth.
-7. Watchlist for logged-in users.
+7. Watched pools for logged-in users, kept with followed creators in one Following tab (Fan Graph #22, decision 6).
 8. A published "profile completeness" signal (image, description, handle, at least one perk) used as a ranking tie-breaker and a listing floor.
 9. A plain disclaimer footer: information only, no endorsement, variable rewards.
 
@@ -117,7 +117,7 @@ Most of the explorer already exists. This document is a gap analysis plus the ta
 | Surface | Where | Who | Purpose |
 |---|---|---|---|
 | Public explorer | `amped.bio/pools` (see Decision 1) | Anyone, no account | Discovery, SEO, verification, share links |
-| In-app explorer | Explore panel in the editor at `app.amped.bio` | Logged-in users | Discovery plus "Your stakes", watchlist, stake and unstake in place |
+| In-app explorer | Explore panel in the editor at `app.amped.bio` | Logged-in users | Discovery plus "Your stakes", followed creators and watched pools (Following), stake and unstake in place |
 
 Both surfaces call the same `pools.explorer.*` procedures and render the same components from `packages/ui`.
 
@@ -127,7 +127,7 @@ Both surfaces call the same `pools.explorer.*` procedures and render the same co
 2. Materialized pool stats and daily snapshots, with numeric columns that MySQL can sort.
 3. Paginated, server-sorted list API. Search on pool name, handle, display name and address.
 4. Public explorer: list, pool detail (server-rendered), activity feed, creators tab.
-5. In-app explorer: same list and detail, plus "Your stakes", watchlist, stake modal in place.
+5. In-app explorer: same list and detail, plus "Your stakes", watched pools inside Following, stake modal in place.
 6. Categories on pools.
 7. Staker perks panel on pool detail, read from `AccessRule` (display only).
 8. Compliance copy pass across all pool surfaces listed in 1.1.
@@ -174,13 +174,13 @@ Dark hero with four network totals for creator pools only. Search, sort, filters
 
 ![Pool detail, desktop](img/creator-pool-explorer-pool-detail.png)
 
-Server-rendered. Header with creator identity and four actions: Watch, Share, Revoscan, Stake REVO. Five stat cards: total, creator stake, fan stake, stakers, take rate. Total staked chart with 7D, 30D, 90D, All. Activity table filtered by type, each row linked to Revoscan. Right column: about, staker perks from `AccessRule`, reward rate card in its "under review" state (Decision 2), top stakers with opt-in handles, contract facts with block height.
+Server-rendered. Header with creator identity and five actions: Follow (the creator, Fan Graph #22, source `pool`), Watch (the pool), Share, Revoscan, Stake REVO. Follow is free and is never shown as a step toward staking. Five stat cards: total, creator stake, fan stake, stakers, take rate. Total staked chart with 7D, 30D, 90D, All. Activity table filtered by type, each row linked to Revoscan. Right column: about, staker perks from `AccessRule`, reward rate card in its "under review" state (Decision 2), top stakers with opt-in handles, contract facts with block height.
 
 **In-app explorer with stake modal** (editor, Explore panel)
 
 ![In-app explorer with stake modal](img/creator-pool-explorer-in-app.png)
 
-Tabs: Creators, Pools, Watchlist. The NFTs stub is removed. "Your stakes" cards show stake and claimable amount per pool, linking to Wallet. The table has an inline Stake button. The stake modal explains what staking does in three factual lines, shows the take rate and the network fee, and hands off to the wallet.
+Tabs: Creators, Pools, Following. The NFTs stub is removed. Following is the Fan Graph tab (#22, boards fg6 and fg12). This spec adds chips inside it: Creators (followed creators, as shipped) and Pools (watched pools). There is no separate Watchlist tab. Creator rows on the Creators tab carry Follow (source `explore`). "Your stakes" cards show stake and claimable amount per pool, linking to Wallet. The table has an inline Stake button. The stake modal explains what staking does in three factual lines, shows the take rate and the network fee, and hands off to the wallet.
 
 **Mobile, pool detail**
 
@@ -352,10 +352,10 @@ New router `apps/server/src/trpc/pools/explorer.ts`, mounted as `pools.explorer`
 | `topStakers` | public | `{ chainId, address, limit: 1 to 20 }` | `{ items: { wallet, handle: string \| null, stakeWei }[] }` |
 | `perks` | public | `{ chainId, address }` | `{ items: { title, requirement: string, kind: "stake_min" \| "pool_member" }[] }`. Calls the gating engine's public summary function. Never returns gated content or its URLs. |
 | `stats` | public | `{ chainId }` | `{ poolCount, totalStakeWei, uniqueStakers, events24h, asOfBlock }` |
-| `creators` | public | `{ chainId, q?, category?, cursor?, limit }` | Creator rows (handle, name, avatar, pool summary). No email. |
+| `creators` | public | `{ chainId, q?, category?, cursor?, limit }` | Creator rows (handle, name, avatar, pool summary). Published pages only (Fan Graph `page_status`). No email. |
 | `myStakes` | private | `{ chainId }` | `{ items: { pool: ExplorerPoolRow, stakeWei, claimableWei }[] }` |
 | `watch` / `unwatch` | private | `{ poolId: number }` | `{ ok: true }` |
-| `watchlist` | private | `{ chainId }` | `{ items: ExplorerPoolRow[] }` |
+| `watchlist` | private | `{ chainId }` | `{ items: ExplorerPoolRow[] }`. Feeds the Pools chip in Explore, Following |
 | `setCategory` | private (pool owner) | `{ poolId, category: PoolCategory }` | `{ ok: true }` |
 | `setListed` | private (pool owner) | `{ poolId, listed: boolean }` | `{ ok: true }` |
 | `sitemapEntries` | public | `{ chainId, cursor?, limit: 1 to 5000 }` | `{ items: { address, updatedAt }[], nextCursor }`. Consumed by the SEO spec's pool sitemap. |
@@ -381,7 +381,7 @@ Existing procedures:
   - `debug` and `debug-apy` move to the admin area of the editor.
   - Header nav: Pools, Creators, Activity, Blog. Network pill. Connect wallet. Create your pool.
 - **Stake from the public site.** The Stake REVO button opens the shared stake modal on the public page when the viewer is logged in (the landing page already has `trpcClient` and wagmi). When logged out, it opens login and returns to the same pool page. This removes the broken `{PANEL_URL}/i/pools/{address}` link.
-- **Editor** (`apps/client`): Explore panel tabs become Creators, Pools, Watchlist. "Your stakes" strip on the Pools tab. Clicking a pool opens the detail in a side sheet inside the editor, not a navigation to the public site. "Open public explorer" link in the header. Leaderboard panel removed per Decision 7.
+- **Editor** (`apps/client`): Explore panel tabs become Creators, Pools, Following. The first tab is renamed from Users to Creators here; Fan Graph kept the Users label until this ships. Following gains the Creators and Pools chips; `FollowingTab.tsx` (Fan Graph) renders the Creators chip unchanged. "Your stakes" strip on the Pools tab. Clicking a pool opens the detail in a side sheet inside the editor, not a navigation to the public site. "Open public explorer" link in the header. Leaderboard panel removed per Decision 7.
 
 ### 3.7 Compliance and copy
 
@@ -515,6 +515,7 @@ Funnel to watch: `pool_detail_viewed` to `pool_stake_clicked` to `pool_stake_con
 17. The default list sort is stakers descending. No sort, rank or highlight uses rewards paid or reward rate.
 18. Every KPI in 3.11 can be computed from events fired in staging: a test session produces `pool_detail_viewed`, `pool_stake_clicked`, `pool_stake_login_returned` and `pool_stake_confirmed` with one shared `stakeFlowId`, and `indexer_lag_sampled` and `explorer_listing_snapshot` appear on schedule.
 19. No analytics event carries an email, a staker wallet address or an exact stake amount.
+20. The editor Explore panel has exactly three tabs, Creators, Pools and Following. Following holds followed creators and watched pools behind two chips. No Watchlist tab exists. Unpublished fan accounts never appear on the Creators tab or in `explorer.creators`.
 
 ### 3.13 Phased rollout
 
@@ -525,7 +526,7 @@ Overview launch stages: Pre-launch covers phases 0 and 1. Launch is phase 2. Pos
 | 0. Hotfix (days) | October 2026 (proposed) | Copy pass (3.7). Hide APR on every surface. Remove public debug links and move debug pages behind admin login. Fix the Stake deep link. Remove mock Leaderboard. Add pool name and handle to `getPools` search. `hidden` check in `getPoolByAddress`. Ship `scripts/check-compliance-copy.ts` in the build. | None. Ships first. | Criteria 6, 7, 10, 13, 16 |
 | 1. Data layer | October 2026 (proposed) | Migration. Indexer and backfill from the factory deployment block. `PoolStats`, `PoolSnapshot`. `explorer.list`, `get`, `history`, `activity`, `stats`. `indexer_lag_sampled` and `explorer_listing_snapshot`. In-app nudge in My Pool to complete the fields that count toward `completeness`. | Counsel review of the disclaimer, stake modal copy and the "How network rewards reach a pool" article starts here. | Criteria 1, 2, 3 |
 | 2. Public explorer (launch) | December 2026 (proposed) | `/pools` routes, redirects from `/i/pools`, server-rendered detail, shared `packages/ui` components, reserved handles, categories, disclaimer, default sort by stakers. Funnel and traffic analytics events from 3.11, so 90-day KPIs start at launch. | Counsel sign-off on the disclaimer and stake modal copy. The `handle.getHandle` email exposure fix (Broadcast D1) is live, since pool pages link to creator bios. | Criteria 4, 5, 11, 15, 17, 18 |
-| 3. In-app explorer | First quarter 2027 (proposed) | Explore panel rebuild, "Your stakes", watchlist, in-place detail and stake. `showStakesPublicly` setting. | Phase 2 live. | Criteria 9, 12 |
+| 3. In-app explorer | First quarter 2027 (proposed) | Explore panel rebuild (Users renamed Creators), "Your stakes", watched pools as the Pools chip in Following, in-place detail and stake. `showStakesPublicly` setting. | Phase 2 live. Fan Graph (#22) Following tab live. | Criteria 9, 12, 20 |
 | 4. Perks and growth | First quarter 2027 (proposed) | Perks panel from `AccessRule`. Rising sort. Creators and Activity tabs. Remaining analytics events. Sitemap entries for the SEO spec. | Access gating engine ships its public rule summary function. SEO spec (item #10) sitemap in place. | All KPI measurements in 3.11 live |
 | Later | Not scheduled | Reward rate display if counsel approves. Mainnet network selector. Revolution-branded host. | Securities counsel sign-off for reward rate. Rob's decision. | Rob's decision |
 
@@ -547,5 +548,7 @@ Overview launch stages: Pre-launch covers phases 0 and 1. Launch is phase 2. Pos
 - SEC Division of Corporation Finance, Statement on Certain Protocol Staking Activities (May 29, 2025), background for counsel review only: https://www.sec.gov/newsroom/speeches-statements/statement-certain-protocol-staking-activities-052925
 
 ## Revision log
+
+2026-10-03: Fan Graph (#22) edits. Explore tabs become Creators, Pools, Following; the Watchlist tab is dropped and watched pools become a Pools chip inside Following. Pool detail header gains Follow (source `pool`); Creators tab rows carry Follow (source `explore`). `explorer.creators` lists published pages only. Acceptance 20 added; phase 3 depends on the Following tab.
 
 2026-09-26: aligned with business overview (added overview link; default sort changed to stakers, total staked kept as an option; banned-word list, approved alternatives and compliance rules matched to the overview as one product plus marketing list; disclaimer text matched exactly and the wrong "refreshes every 5 minutes" line removed; build-time banned-word check added; traffic source, stake flow id, listing floor and indexer lag analytics plus a KPI to event table added; phases given proposed timings and gates for counsel sign-off, the D1 email fix and the gating engine; analytics moved to launch; acceptance criteria 16 to 19 added and 7 and 15 tightened).

@@ -22,7 +22,7 @@ The Creator Pool Explorer is one place to find every creator pool on the REVO ne
 - Browse all pools in a sortable table or grid, with category chips and a "Rising" view based on 30-day member growth.
 - Verify every figure: each page shows the block height, and every number links to Revoscan.
 - Stake from the pool page in one flow. Logged-out fans return to the same page after login.
-- Inside the app: a "Your stakes" summary, a watchlist, and stake and unstake without leaving the panel.
+- Inside the app: a "Your stakes" summary, watched pools kept with followed creators in one Following tab (Fan Graph #22), and stake and unstake without leaving the panel.
 - Their handle appears next to their stake only if they turn on "Show my stakes publicly". It is off by default.
 
 **For Amped the business**
@@ -96,7 +96,7 @@ Social post: "Every creator pool on the REVO network, in one place. Search by na
 |---|---|---|---|
 | Pre-launch | October 2026, hotfix within days (proposed) | Fix the creator email exposure (D1). Fix the broken Stake link. Remove the fake leaderboard APR and all "earn" copy. Hide APR on every surface. Move debug pages behind admin login. Build the chain indexer and backfill from the factory deployment block. Counsel reviews the disclaimer and stake modal copy. | No public marketing yet. Creator nudges in app to complete profiles. |
 | Launch | December 2026 (proposed) | Public explorer at amped.bio/pools with redirects from /i/pools. Server-built pool pages, categories, disclaimer and reserved handles. Announce with a walkthrough video. | Amped blog. X. LinkedIn. TikTok and Instagram short video. AI Leader Edge podcast segment on community-first discovery. |
-| Post-launch | First quarter 2027 (proposed) | In-app explorer with "Your stakes" and watchlist. Opt-in public staker identity. Perks panel, Rising view, Creators and Activity tabs. Pool sitemap entries. | Amped blog "Rising creators" roundups. LinkedIn and X threads. Apollo.io outreach to creators with pools that miss the listing floor. |
+| Post-launch | First quarter 2027 (proposed) | In-app explorer with "Your stakes" and watched pools in Following. Opt-in public staker identity. Perks panel, Rising view, Creators and Activity tabs. Pool sitemap entries. | Amped blog "Rising creators" roundups. LinkedIn and X threads. Apollo.io outreach to creators with pools that miss the listing floor. |
 
 | Metric | Target at 90 days | Why |
 |---|---|---|
