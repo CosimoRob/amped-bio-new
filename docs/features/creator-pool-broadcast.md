@@ -12,7 +12,7 @@ Business overview: [docs/overviews/creator-pool-broadcast.md](../overviews/creat
 - **Who a staker is.** `UserWallet.userId` is unique, so every wallet Amped tracks belongs to exactly one Amped user. `User.email` is required and unique. There is no wallet-only sign in (no SIWE). Every staker Amped knows about therefore has an account and an email address, verified or not (`email_verified`).
 - **How stakes reach the database.** `StakedPool` is written by `fan.confirmStake`, `fan.confirmUnstake` and the claim flow in `apps/server/src/trpc/pools/fan.ts`, and by admin sync procedures in `apps/server/src/trpc/admin/pools.ts`. All of them resolve an existing Amped `UserWallet`. A wallet that stakes directly on chain without an Amped account never appears in `StakedPool`.
 - **Listing members.** `pools.creator.getFans` in `apps/server/src/trpc/pools/creator.ts` checks that the caller owns the pool, then pages through `StakedPool` where `stakeAmount > 0`. It orders by `CAST(stakeAmount AS DECIMAL(65,0))` for amount sorting. It returns handles and profile images, not emails. The same query shape can resolve a broadcast audience.
-- **Followers.** There is no follow model in the schema. The UI and `CreatorPool.fans` call stakers "fans". "Followers" do not exist today.
+- **Followers.** There is no follow model at this baseline. The UI and `CreatorPool.fans` call stakers "fans". Fan Graph (#22, [fan-graph.md](fan-graph.md), upstream PR #267) adds `Follow`: a free follow from any Amped account to a creator, with a per creator email opt-in on the follow row (`email_updates`, `email_updates_at`). A follow is ACTIVE while the follower's email is verified and the account is not suspended.
 - **Email.** `apps/server/src/utils/email/email.ts` uses one nodemailer SMTP transporter and react-email templates (`VerifyEmailTemplate`, `ResetPasswordTemplate`, `EmailChangeTemplate`, `WelcomeEmailTemplate`). It is transactional only. Two problems matter for broadcast:
   1. `sendEmail` accepts an array and joins all recipients into one `To:` header. Used for a broadcast, every member would see every other member's address. Broadcast must send one message per recipient.
   2. It logs recipient addresses to the console on every send. Broadcast volume would put member emails in logs.
@@ -49,7 +49,7 @@ Business overview: [docs/overviews/creator-pool-broadcast.md](../overviews/creat
 2. Audience is a pool plus an optional `AccessRule`, evaluated at send time and frozen into delivery rows.
 3. One way only. No replies, threads or direct messages.
 4. Per creator email control, global email control, and mute. Unsubscribing never touches membership.
-5. Hard rate limits per pool, and automatic pause on complaints or reports.
+5. Hard rate limits per sender, and automatic pause on complaints or reports.
 6. Aggregate stats only. No per member tracking shown to creators.
 
 ### Patterns to avoid
@@ -73,12 +73,13 @@ A pool owner sends a one way update to the members of their creator pool. Member
 
 - **Member.** A user whose wallet has `stakeAmount > 0` in `StakedPool` for the pool.
 - **Pool owner.** The user whose `UserWallet` owns the `CreatorPool`.
-- **Follower.** Not a concept today. See decision 1.
+- **Follower.** An account with an ACTIVE `Follow` to the creator (Fan Graph #22). Free. A follower may or may not be a member.
+- **Sender.** A creator who owns a pool or has at least one ACTIVE follower.
 
 ### In scope
 
-1. Composer in the editor for pool owners, with audience picker, recipient estimate, content check, attachment, preview, test send and schedule.
-2. Audience: all members of one pool, or members matching an `AccessRule` from the gating engine.
+1. Composer in the editor for senders (pool owners, and from phase 2 creators with followers), with audience picker, recipient estimate, content check, attachment, preview, test send and schedule.
+2. Audience: all members of one pool, members matching an `AccessRule` from the gating engine, or all followers (phase 2, after Fan Graph #22 is in production).
 3. Channels: Amped inbox (always) and email (opt in).
 4. Fan inbox in `apps/client`, desktop and mobile, with unread badge.
 5. Email template, one click unsubscribe, bounce and complaint handling, suppression list.
@@ -92,7 +93,6 @@ A pool owner sends a one way update to the members of their creator pool. Member
 
 - **Messaging (Build Board item #2).** Replies, conversations, direct messages, group chat, Telegram bot, XMTP or Push. Broadcast is one to many and one way. #2 owns every two way surface and every external chat channel. Section 3.12 defines the seam.
 - **Paid broadcasts** or pay to unlock messages. Creator payments are on hold.
-- **Followers** as an audience (decision 1).
 - **Web push and mobile push.** Planned for phase 3.
 - **Open tracking** and per member analytics.
 - **Broadcasting to people who are not Amped users**, including on chain holders without an account.
@@ -100,10 +100,10 @@ A pool owner sends a one way update to the members of their creator pool. Member
 
 ### Decisions for Rob
 
-1. **Audience in v1.** Recommended: pool members only. Followers do not exist. When a follow model ships, the gating engine's `follower` rule kind plugs in with no broadcast schema change.
+1. **Audience.** Recommended: pool members at launch. Followers join in phase 2 as their own audience kind, `FOLLOWERS`, once Fan Graph (#22) is in production. Revised 2026-10-03: the earlier note that followers plug in with no schema change no longer holds. A followers audience can belong to a creator with no pool, so `Broadcast.poolId` becomes nullable and the composer opens for any sender.
 2. **Email consent.** Recommended: explicit opt in. The stake confirmation shows an unticked "Email me updates from {creator}" box, and the inbox offers the same toggle. Existing members get the inbox only until they opt in. The alternative is email on by default with opt out for non EU members. That reaches more people and needs country detection we do not have.
 3. **Flagged content.** Recommended: a flagged broadcast is held for admin review before anyone receives it. The creator can edit the phrase and send at once instead. The alternative is warn only, which leaves staking language in members' inboxes.
-4. **Rate limits.** Recommended: 3 broadcasts per pool per 24 hours, 10 per 7 days. Each creator's first broadcast is reviewed by an admin.
+4. **Rate limits.** Recommended: 3 broadcasts per sender per 24 hours, 10 per 7 days, counted across every audience (members and followers). Each creator's first broadcast is reviewed by an admin.
 5. **Access after unstaking.** Recommended: a member who unstakes keeps the text of messages already delivered. Attachments re-check access when opened, so they lock once the member no longer qualifies.
 6. **Email provider.** Recommended: Amazon SES or Postmark with a dedicated broadcast stream on `send.amped.bio`, with bounce and complaint webhooks. Current SMTP has no event feedback.
 7. **Stats detail.** Recommended: totals only. Creators already see member handles through `getFans`. They do not see who read, clicked or unsubscribed.
@@ -117,7 +117,7 @@ A pool owner sends a one way update to the members of their creator pool. Member
 
 ![Composer with audience picker, content check and preview](img/creator-pool-broadcast-composer.png)
 
-The owner picks all members or an access rule and sees how many members match and how many get email. The inbox channel is always on. The content check highlights a flagged phrase and switches the primary button to "Send for review". The preview toggles between inbox and email.
+The sender picks all members, an access rule or all followers, and sees how many people match and how many get email. The inbox channel is always on. The content check highlights a flagged phrase and switches the primary button to "Send for review". The preview toggles between inbox and email.
 
 **Sent broadcasts and delivery stats.**
 
@@ -129,7 +129,7 @@ A list of sent, scheduled and in review broadcasts on the left. The detail shows
 
 ![Fan inbox on mobile](img/creator-pool-broadcast-fan-inbox.png)
 
-All broadcasts from every pool the member belongs to, newest first, with unread dots and filters. The "Amped" filter holds platform notices sent through the same inbox.
+All broadcasts from every pool the member belongs to and, from phase 2, every creator they follow, newest first, with unread dots and filters. The "Amped" filter holds platform notices sent through the same inbox.
 
 **Broadcast detail with preferences and report (mobile).**
 
@@ -147,9 +147,10 @@ Mockup sources: `docs/features/mockups/creator-pool-broadcast-*.html`.
 
 ### 3.2 Where the UI lives
 
-- **Composer and Sent.** New editor panel `broadcast` in `apps/client`, icon `Megaphone`, label "Broadcast". Shown only to users who own a pool, like "My Pool". Behind `VITE_SHOW_BROADCAST` using the existing `environmentFlag` pattern. The env flag is build-wide, so the invite-only pilot also needs a server check: while `BROADCAST_INVITE_ONLY` is true, the panel shows and `send` succeeds only for owners with `BroadcastSenderStatus.invitedAt` set. The composer states email reach as "members who opt in get email", never as "email all your fans". The "My Pool" dashboard gets a "Send a broadcast" shortcut.
+- **Composer and Sent.** Broadcasts is a tab in the People destination, beside Followers (Fan Graph #22, decision 5). Before Fan Graph is in production it ships as the editor panel `broadcast`, icon `Megaphone`, label "Broadcast", shown only to users who own a pool. After Fan Graph ships it moves into People and shows to every sender (a pool owner or a creator with at least one ACTIVE follower). Behind `VITE_SHOW_BROADCAST` using the existing `environmentFlag` pattern. The env flag is build-wide, so the invite-only pilot also needs a server check: while `BROADCAST_INVITE_ONLY` is true, the panel shows and `send` succeeds only for owners with `BroadcastSenderStatus.invitedAt` set. The composer states email reach as "members who opt in get email" or "followers who opt in get email", never as "email all your fans". The "My Pool" dashboard gets a "Send a broadcast" shortcut.
 - **Inbox.** New panel `inbox`, icon `Bell`, label "Inbox", shown to every signed in user, with an unread dot. Deep link: `app.amped.bio/inbox/{broadcastId}`. Unread count polls every 60 seconds and on window focus in v1.
 - **Stake flow opt in.** The stake confirmation adds the unticked email box from decision 2.
+- **Follow opt in.** The Fan Graph first-follow sheet and the Following menu carry the per creator "Email me {creator}'s updates" box (unticked). Both write the same preference as the stake box (3.3).
 - **Admin.** A "Broadcast review" view in the existing admin area.
 - **Unsubscribe pages.** Public pages on `amped.bio` (landingpage) for "You will no longer get email from {creator}" with an undo button.
 
@@ -173,12 +174,13 @@ enum BroadcastStatus {
 enum BroadcastAudienceKind {
   ALL_MEMBERS
   ACCESS_RULE
+  FOLLOWERS // phase 2, after Fan Graph (#22) is in production
 }
 
 model Broadcast {
   id             Int                   @id @default(autoincrement())
   creatorUserId  Int
-  poolId         Int
+  poolId         Int?                  // null for a FOLLOWERS broadcast from a creator with no pool
   audienceKind   BroadcastAudienceKind @default(ALL_MEMBERS)
   accessRuleId   Int?                  // AccessRule owned by creatorUserId
   title          String                @db.VarChar(120)
@@ -199,12 +201,13 @@ model Broadcast {
   updatedAt      DateTime?             @updatedAt
 
   creator    User                @relation("BroadcastCreator", fields: [creatorUserId], references: [id], onDelete: Cascade)
-  pool       CreatorPool         @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  pool       CreatorPool?        @relation(fields: [poolId], references: [id], onDelete: Cascade)
   deliveries BroadcastDelivery[]
   reports    BroadcastReport[]
 
   @@unique([creatorUserId, idempotencyKey])
   @@index([poolId, createdAt])
+  @@index([creatorUserId, createdAt])
   @@index([status, scheduledFor])
   @@map("broadcasts")
 }
@@ -263,7 +266,7 @@ model NotificationConsentEvent {
   userId        Int
   creatorUserId Int      @default(0)
   emailEnabled  Boolean
-  source        String   @db.VarChar(32) // stake_checkbox | inbox_toggle | settings | unsubscribe_link | list_unsubscribe | complaint
+  source        String   @db.VarChar(32) // stake_checkbox | follow_sheet | follow_menu | inbox_toggle | settings | unsubscribe_link | list_unsubscribe | complaint | follow_backfill
   createdAt     DateTime @default(now())
 
   @@index([userId, createdAt])
@@ -315,38 +318,40 @@ Notes:
 
 - A member gets email only when all of these hold: global row `emailEnabled`, creator row `emailEnabled`, `mutedUntil` is null or past, `email_verified` is true, and the address is not in `EmailSuppression`.
 - `NotificationConsentEvent` is append only. It is the GDPR record of consent.
+- **Follow consent.** Fan Graph (#22) stores the per creator email opt-in on `Follow.email_updates` and `email_updates_at` until this spec ships. The Broadcast migration backfills: one creator row `emailEnabled = true` and one `NotificationConsentEvent` (source `follow_backfill`, `createdAt` = `email_updates_at`) per follow with `email_updates = true`. A global row with `emailEnabled = true` is created when none exists, because the fan gave an explicit per creator opt-in. From then on `NotificationPreference` is the only source of truth: `follow.follow` and `follow.update` call `notifications.setCreatorEmail` with source `follow_sheet` or `follow_menu`, Fan Graph reads the creator row, and a later migration drops `Follow.email_updates` and `email_updates_at`.
+- Unfollowing does not change email consent. A fan who is no longer a follower or member gets nothing, because they are not in any audience. Following again restores reach with the consent they set.
 - Platform notices ("Amped" filter in the inbox) reuse `Broadcast` with a system sender later. Out of scope for v1 data.
 
 ### 3.4 tRPC procedures
 
 New `broadcast` router in `apps/server/src/trpc/broadcast/`, merged in `apps/server/src/trpc/index.ts`. Input schemas use zod and live in `packages/constants` where the client needs them (limits, word list, audience shape).
 
-**`broadcast.creator`** (all `privateProcedure`, all check pool ownership through `UserWallet.userId`):
+**`broadcast.creator`** (all `privateProcedure`). Procedures with a `poolId` check pool ownership through `UserWallet.userId`. `FOLLOWERS` broadcasts have no `poolId` and are scoped to `ctx.user.sub`; a pool owner sending to followers may pass their `poolId` or omit it.
 
 | Procedure | Input | Output |
 |---|---|---|
-| `getQuota` | `{ poolId }` | used and remaining sends for 24 hours and 7 days, paused flag |
-| `estimateAudience` | `{ poolId, audience: { kind, accessRuleId? } }` | `{ members, inbox, email, emailOffOrUnverified }` counts only |
+| `getQuota` | none | used and remaining sends for 24 hours and 7 days across every audience of the sender, paused flag |
+| `estimateAudience` | `{ poolId?, audience: { kind, accessRuleId? } }` | `{ members, inbox, email, emailOffOrUnverified }` counts only. For `FOLLOWERS`, `members` is the follower count |
 | `checkContent` | `{ title, body }` | `{ flagged: [{ phrase, start, end, category }] }` |
-| `saveDraft` | `{ id?, poolId, audience, title, body, contentItemId?, sendEmail }` | draft |
+| `saveDraft` | `{ id?, poolId?, audience, title, body, contentItemId?, sendEmail }` | draft. `poolId` is required for `ALL_MEMBERS` and `ACCESS_RULE` |
 | `sendTest` | `{ id }` | sends the email to the owner's own address only. Limited to 5 per hour. |
 | `send` | `{ id, idempotencyKey, scheduledFor? }` | broadcast with status `QUEUED`, `SCHEDULED` or `IN_REVIEW` |
 | `cancel` | `{ id }` | allowed in `SCHEDULED` or `IN_REVIEW` |
-| `list` | `{ poolId, cursor? }` | broadcasts with status and counts |
+| `list` | `{ cursor? }` | the sender's broadcasts across every audience, with status and counts |
 | `getStats` | `{ id }` | aggregate totals from `BroadcastDelivery` and `BroadcastReport` |
 
 **`broadcast.inbox`** (`privateProcedure`, scoped to `ctx.user.sub`):
 
 | Procedure | Input | Output |
 |---|---|---|
-| `list` | `{ cursor?, filter: "all" \| "unread" \| "pools" }` | deliveries joined to broadcast, creator name, handle, avatar |
+| `list` | `{ cursor?, filter: "all" \| "unread" \| "pools" \| "following" }` (`following` from phase 2) | deliveries joined to broadcast, creator name, handle, avatar |
 | `get` | `{ broadcastId }` | full message. Sets `readAt`. Attachment metadata only. |
 | `unreadCount` | none | number |
 | `archive` | `{ broadcastId }` | ok |
 | `getAttachmentUrl` | `{ broadcastId }` | calls `checkAccess(userId, { type: "broadcast", id })`, then the content system's signed URL |
 | `report` | `{ broadcastId, reason, note? }` | ok |
 
-**`notifications`** (`privateProcedure`): `getPreferences`, `setGlobalEmail({ enabled })`, `setCreatorEmail({ creatorUserId, enabled, source })`, `muteCreator({ creatorUserId, days: 7 | 30 })`, `unmuteCreator`.
+**`notifications`** (`privateProcedure`): `getPreferences`, `setGlobalEmail({ enabled })`, `setCreatorEmail({ creatorUserId, enabled, source })` (Fan Graph calls it with source `follow_sheet` or `follow_menu`), `muteCreator({ creatorUserId, days: 7 | 30 })`, `unmuteCreator`.
 
 **`admin.broadcasts`** (admin procedures): `reviewQueue`, `approve({ id })`, `reject({ id, note })`, `listReports`, `pauseSender({ userId, reason })`, `resumeSender({ userId })`, `inviteSender({ userId })`, `revokeInvite({ userId })`.
 
@@ -362,7 +367,8 @@ Unsubscribe tokens are HMAC signed over `{ userId, creatorUserId | 0, scope }` w
 ### 3.5 Audience resolution
 
 - `ALL_MEMBERS`: `StakedPool` rows for the pool with `CAST(stakeAmount AS DECIMAL(65,0)) > 0`, joined to `UserWallet.userId`. Same shape as `getFans`.
-- `ACCESS_RULE`: the gating engine resolves the rule to a set of user ids for the pool. For `stake_min`, that is the query above with `>= params.minWei`. For `pool_member`, it equals `ALL_MEMBERS`. `paid` and `reward_points` are rejected in v1. `follower` is rejected until follows exist.
+- `ACCESS_RULE`: the gating engine resolves the rule to a set of user ids for the pool. For `stake_min`, that is the query above with `>= params.minWei`. For `pool_member`, it equals `ALL_MEMBERS`. `paid` and `reward_points` are rejected in v1. A `follower` rule is rejected as an audience: use `FOLLOWERS`, which resolves to the same set.
+- `FOLLOWERS`: every ACTIVE `Follow` with `creator_id` = the sender. ACTIVE means the follower's `email_verified` is true and `block` is "no". Rows in `FollowBlock` for the sender are excluded. Pending follows (unverified email) are not in the audience. Same set as the creator's Followers list in People.
 - **Dependency on the gating spec.** Broadcast needs a batch resolver, `listEligibleUserIds(ruleId, { poolId })`, in addition to `checkAccess`. Checking members one by one does not scale.
 - Resolution excludes the owner, users with `block` set to suspended, and duplicate users.
 - Membership comes from the `StakedPool` mirror. A stake changed on chain outside Amped shows up only after the admin sync runs. This is accepted for v1.
@@ -403,7 +409,9 @@ Unsubscribe tokens are HMAC signed over `{ userId, creatorUserId | 0, scope }` w
 
 ### 3.7 Permissions
 
-- Only the pool owner can compose, send, cancel or view stats for a pool's broadcasts. Every creator procedure resolves `CreatorPool.wallet.userId` and compares it to `ctx.user.sub`.
+- Only the pool owner can compose, send, cancel or view stats for a pool's broadcasts. Every creator procedure with a `poolId` resolves `CreatorPool.wallet.userId` and compares it to `ctx.user.sub`.
+- Only the creator can send to their own followers. A `FOLLOWERS` broadcast is scoped to `ctx.user.sub` and needs at least one ACTIVE follower.
+- A sender's page must be PUBLISHED (Fan Graph `page_status`). A fan account with no page cannot send.
 - The sender must have a verified email and must not be suspended or paused.
 - The `accessRuleId` must belong to the sender. The `contentItemId` must belong to the sender.
 - A member can read only broadcasts with a `BroadcastDelivery` row for them.
@@ -437,7 +445,7 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 **Marketing and disclosure rules.** These apply to all Broadcast marketing, demos and pilot material.
 
 - Describe joining a pool as membership in, and support for, a creator's community. Never promise returns, yield, earnings or price movement.
-- Say "members who opt in get email". Never say "email all your fans".
+- Say "members who opt in get email" or "followers who opt in get email". Never say "email all your fans".
 - Creators never see member emails. Demo screenshots use test accounts only.
 - Do not promote Broadcast publicly until the D1 fix is live.
 - Do not claim open-rate analytics. v1 has no open tracking.
@@ -452,7 +460,7 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 | Body | 5,000 characters, Markdown subset: bold, italic, links, line breaks |
 | Links | 5 per broadcast, `https` only, checked against a blocklist |
 | Attachments | 1 `ContentItem` |
-| Sends | 3 per pool per 24 hours, 10 per 7 days |
+| Sends | 3 per sender per 24 hours, 10 per 7 days, across every audience |
 | Test sends | 5 per hour |
 | Scheduling | up to 30 days ahead |
 
@@ -473,9 +481,9 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 
 | Event | Where | Properties |
 |---|---|---|
-| `broadcast_composer_opened` | client | `pool_id` |
-| `broadcast_daily_snapshot` | server, daily at 00:00 UTC | `eligible_owners` (pool owners with Broadcast access and at least one member), `owners_sent_ever`, `member_pairs` (member and creator pairs), `member_pairs_email_opted_in` |
-| `broadcast_audience_estimated` | client | `pool_id`, `audience_kind`, `members` |
+| `broadcast_composer_opened` | client | `pool_id` (null when the sender has no pool) |
+| `broadcast_daily_snapshot` | server, daily at 00:00 UTC | `eligible_owners` (senders with Broadcast access and at least one member or ACTIVE follower), `owners_sent_ever`, `member_pairs` (member and creator pairs), `member_pairs_email_opted_in`, `follower_pairs` (follower and creator pairs), `follower_pairs_email_opted_in` |
+| `broadcast_audience_estimated` | client | `pool_id`, `audience_kind` (`all_members`, `access_rule`, `followers`), `members` |
 | `broadcast_content_flagged` | client, server | `categories` |
 | `broadcast_sent` | server | `broadcast_id`, `pool_id`, `audience_kind`, `recipients`, `email_eligible`, `has_attachment`, `scheduled` |
 | `broadcast_held_for_review` | server | `broadcast_id`, `reason` (`flagged` or `first_send`) |
@@ -505,7 +513,7 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 
 ### 3.10 Acceptance criteria
 
-1. A pool owner sees the Broadcast panel. A user without a pool does not.
+1. A pool owner sees Broadcast. A user without a pool does not, until Fan Graph (#22) is in production. After that, a creator with at least one ACTIVE follower also sees it (as the Broadcasts tab in People), and a fan account with no published page does not.
 2. `estimateAudience` for "all members" equals the count of `StakedPool` rows with a positive stake for that pool, minus suspended users.
 3. `estimateAudience` for a `stake_min` rule of 500 REVO counts only members at or above 500 REVO in wei.
 4. Sending twice with the same `idempotencyKey` creates one broadcast and one delivery per member.
@@ -527,8 +535,11 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 20. Every broadcast email names the sender in `From`, carries the postal address, and has working `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
 21. The stake confirmation email box is unticked by default. Every consent change writes a `NotificationConsentEvent`.
 22. While `BROADCAST_INVITE_ONLY` is true, `send` returns `FORBIDDEN` for an owner without `invitedAt`.
-23. Composer and marketing copy in the repo never contains "email all your fans". Email reach is labeled "members who opt in get email".
+23. Composer and marketing copy in the repo never contains "email all your fans". Email reach is labeled "members who opt in get email" or "followers who opt in get email".
 24. Every KPI in 3.9 can be computed from events fired in staging. A test broadcast produces `broadcast_fanout_completed` with `recipients`, `broadcast_read` with `first_read`, and a `broadcast_daily_snapshot` on schedule.
+25. Phase 2, `FOLLOWERS`: `estimateAudience` equals the creator's Followers total in People. A pending, removed or blocked follower gets no delivery row. A follower without email consent for that creator gets the inbox copy and no email.
+26. A creator with followers and no pool can send to `FOLLOWERS` with `poolId` null. `ALL_MEMBERS` and `ACCESS_RULE` still require an owned pool.
+27. After the Broadcast migration, every follow with `email_updates = true` has a creator row with `emailEnabled = true` and a `follow_backfill` consent event, and changing the box in the Following menu writes a `follow_menu` event.
 
 ### 3.11 Phased rollout
 
@@ -557,17 +568,17 @@ Overview launch stages: Pre-launch is phase 0. Launch is phase 1. Post-launch is
 - `ACCESS_RULE` audiences once the gating engine ships its batch resolver. This is a hard dependency. Without it, only `ALL_MEMBERS` ships.
 - `ContentItem` attachments once the content system ships.
 - Open to all pool owners. Set `BROADCAST_INVITE_ONLY` to false.
+- `FOLLOWERS` audience once Fan Graph (#22) is in production. This is a hard dependency. It brings the nullable `poolId`, the follow consent backfill (3.3), the move of Broadcast into People, and the sender rule in 3.7.
 - Gate to email: `send.amped.bio` passes SPF, DKIM and DMARC checks, and one click unsubscribe passes criterion 8.
 
 **Phase 3: reach. After January 2027 (proposed).**
 
 - Scheduling UI, socket.io live inbox, web push.
-- Follower audience if a follow model ships.
 - Telegram and wallet channels through the messaging adapter (3.12).
 
 ### 3.12 Boundary with messaging (Build Board item #2)
 
-- **Broadcast owns:** one to many, one way messages from a pool owner to members. The `Broadcast` and `BroadcastDelivery` models. The inbox panel. Notification preferences. Email delivery infrastructure: provider, suppression, unsubscribe.
+- **Broadcast owns:** one to many, one way messages from a creator to their members or followers. The `Broadcast` and `BroadcastDelivery` models. The inbox panel. Notification preferences. Email delivery infrastructure: provider, suppression, unsubscribe.
 - **Messaging owns:** replies, conversations, direct messages, group chats, presence, and every external chat channel: Telegram bot and account linking, XMTP, Push.
 - **The seam.**
   - The delivery worker calls channel adapters behind one interface: `deliver(deliveryId, channel)`. v1 ships `inbox` and `email`. #2 adds `telegram` and `wallet` adapters that broadcast can then use, with their own rate limits. Telegram bots can bulk send at about 30 messages per second.
@@ -595,5 +606,7 @@ Overview launch stages: Pre-launch is phase 0. Launch is phase 1. Post-launch is
 - RFC 8058, One-click unsubscribe: https://datatracker.ietf.org/doc/html/rfc8058
 
 ## Revision log
+
+2026-10-03: Fan Graph (#22) edits. Decision 1 revised: `FOLLOWERS` audience kind in phase 2, `Broadcast.poolId` nullable, composer opens for any sender with followers, Broadcast moves into People. Consent sources `follow_sheet`, `follow_menu` and `follow_backfill`; follow email consent backfilled into `NotificationPreference`, which becomes the single source. Audience resolution, permissions, procedures, events and acceptance 1, 23, 25 to 27 updated.
 
 2026-09-26: aligned with business overview (added overview link; labeled the email exposure fix D1; added "earn" to the banned list and made it one product plus marketing list; added approved alternatives and marketing, consent, CAN-SPAM and FTC disclosure rules; stored the fixed footer as a constant; added a build-time banned-word check; added a server invite gate for the 15-creator pilot; moved inbox stats and analytics to launch; added a daily snapshot event, KPI properties and a KPI to event table; gave phases proposed dates and gates for D1, counsel sign-off and the gating engine; added acceptance criteria 19 to 24 and tightened 17).
