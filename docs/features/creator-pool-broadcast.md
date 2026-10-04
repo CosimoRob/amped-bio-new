@@ -1,6 +1,6 @@
 # Creator Pool Broadcast
 
-Status: spec for review. Build Board item #1.
+Status: phase 1 (Amped inbox only) built, in review. Decisions accepted by Rob on 2026-10-04. Build Board item #1.
 Owner: Rob Frasca. Drafted by Claude, 2026-09-26.
 Business overview: [docs/overviews/creator-pool-broadcast.md](../overviews/creator-pool-broadcast.md)
 
@@ -98,60 +98,40 @@ A pool owner sends a one way update to the members of their creator pool. Member
 - **Broadcasting to people who are not Amped users**, including on chain holders without an account.
 - **Rich layouts.** Title, formatted text, links, one attachment.
 
-### Decisions for Rob
+### Decisions
+
+Accepted by Rob on 2026-10-04. Decisions 3 and 8 were not taken as first recommended: flagged language warns and does not hold, and the product team owns the word list.
 
 1. **Audience.** Recommended: pool members at launch. Followers join in phase 2 as their own audience kind, `FOLLOWERS`, once Fan Graph (#22) is in production. Revised 2026-10-03: the earlier note that followers plug in with no schema change no longer holds. A followers audience can belong to a creator with no pool, so `Broadcast.poolId` becomes nullable and the composer opens for any sender.
 2. **Email consent.** Recommended: explicit opt in. The stake confirmation shows an unticked "Email me updates from {creator}" box, and the inbox offers the same toggle. Existing members get the inbox only until they opt in. The alternative is email on by default with opt out for non EU members. That reaches more people and needs country detection we do not have.
-3. **Flagged content.** Recommended: a flagged broadcast is held for admin review before anyone receives it. The creator can edit the phrase and send at once instead. The alternative is warn only, which leaves staking language in members' inboxes.
+3. **Flagged content.** Decided: warn only. The composer shows the matched phrases and suggests alternatives. Sending a flagged broadcast needs one extra confirm (Send anyway). The phrases are stored on the broadcast and listed for admins, who can remove a sent broadcast from every inbox. The first recommendation (hold for review) was not taken.
 4. **Rate limits.** Recommended: 3 broadcasts per sender per 24 hours, 10 per 7 days, counted across every audience (members and followers). Each creator's first broadcast is reviewed by an admin.
 5. **Access after unstaking.** Recommended: a member who unstakes keeps the text of messages already delivered. Attachments re-check access when opened, so they lock once the member no longer qualifies.
 6. **Email provider.** Recommended: Amazon SES or Postmark with a dedicated broadcast stream on `send.amped.bio`, with bounce and complaint webhooks. Current SMTP has no event feedback.
 7. **Stats detail.** Recommended: totals only. Creators already see member handles through `getFans`. They do not see who read, clicked or unsubscribed.
-8. **Content check word list owner.** Recommended: securities counsel approves the initial list and any changes. It lives in `packages/constants` so client and server flag the same phrases.
+8. **Content check word list owner.** Decided: the product team owns the list. It lives in `packages/constants/src/broadcast.ts` so client and server flag the same phrases. The first recommendation (counsel approves every change) was not taken.
 
 ## 3. Detailed spec
 
 ### 3.1 Screens
 
-**Composer (desktop, editor panel "Broadcast").**
+Prism 2.2 boards, in the design gallery (https://claude.ai/artifact/GKy9Lvcbg6zckkuDLHrYhv#br):
 
-![Composer with audience picker, content check and preview](img/creator-pool-broadcast-composer.png)
+- **br1 Composer.** My Pool, New broadcast. Audience, title, message with bold, italic and link, the word list notice, and an inbox preview with the fixed footer.
+- **br2 Sent and totals.** My Pool, Broadcasts. Sent, in review and withdrawn broadcasts on the left; recipients, inbox reads and reports on the right. Totals only.
+- **br3 Fan inbox.** All, Unread and per creator filters, newest first, unread dots.
+- **br4 Broadcast detail.** The message, the fixed footer, a 30-day mute and Report this message.
+- **br5 Email.** Phase 2.
 
-The sender picks all members, an access rule or all followers, and sees how many people match and how many get email. The inbox channel is always on. The content check highlights a flagged phrase and switches the primary button to "Send for review". The preview toggles between inbox and email.
-
-**Sent broadcasts and delivery stats.**
-
-![Delivery stats for a sent broadcast](img/creator-pool-broadcast-stats.png)
-
-A list of sent, scheduled and in review broadcasts on the left. The detail shows recipients, inbox reads, email delivery, attachment opens, bounces, email opt outs and reports. Totals only.
-
-**Fan inbox (mobile, 390 wide).**
-
-![Fan inbox on mobile](img/creator-pool-broadcast-fan-inbox.png)
-
-All broadcasts from every pool the member belongs to and, from phase 2, every creator they follow, newest first, with unread dots and filters. The "Amped" filter holds platform notices sent through the same inbox.
-
-**Broadcast detail with preferences and report (mobile).**
-
-![Broadcast detail on mobile](img/creator-pool-broadcast-fan-detail.png)
-
-The full message, the attachment player, the fixed Amped disclaimer, per creator email toggle, 30 day mute and the report entry.
-
-**Email rendering.**
-
-![Broadcast email in a mail client](img/creator-pool-broadcast-email.png)
-
-From "{Creator} via Amped.Bio". The attachment is never in the email. The member signs in to open it. The footer states why they got it, carries the disclaimer, per creator and global unsubscribe links, a report link and the postal address.
-
-Mockup sources: `docs/features/mockups/creator-pool-broadcast-*.html`.
+Phase 1 does not render what it does not ship (app structure D07): no access rule audience, no email count, no test send, no schedule, and no email toggle.
 
 ### 3.2 Where the UI lives
 
-- **Composer and Sent.** Broadcasts is a tab in the People destination, beside Followers (Fan Graph #22, decision 5). Before Fan Graph is in production it ships as the editor panel `broadcast`, icon `Megaphone`, label "Broadcast", shown only to users who own a pool. After Fan Graph ships it moves into People and shows to every sender (a pool owner or a creator with at least one ACTIVE follower). Behind `VITE_SHOW_BROADCAST` using the existing `environmentFlag` pattern. The env flag is build-wide, so the invite-only pilot also needs a server check: while `BROADCAST_INVITE_ONLY` is true, the panel shows and `send` succeeds only for owners with `BroadcastSenderStatus.invitedAt` set. The composer states email reach as "members who opt in get email" or "followers who opt in get email", never as "email all your fans". The "My Pool" dashboard gets a "Send a broadcast" shortcut.
-- **Inbox.** New panel `inbox`, icon `Bell`, label "Inbox", shown to every signed in user, with an unread dot. Deep link: `app.amped.bio/inbox/{broadcastId}`. Unread count polls every 60 seconds and on window focus in v1.
+- **Composer and Sent.** Phase 1: a Broadcasts tab in My Pool (Overview, Broadcasts), shown only to users who own a pool on the current network (`MyPoolDestination`). The pool screens themselves are untouched. After Fan Graph (#22) is in production, Broadcasts moves to the People destination beside Followers (Fan Graph decision 5). There it shows to every sender (a pool owner or a creator with at least one ACTIVE follower). Behind `VITE_SHOW_BROADCAST`. The env flag is build-wide, so the invite-only pilot also needs a server check: while `BROADCAST_INVITE_ONLY` is true, the tab shows a notice and `send` succeeds only for owners with `BroadcastSenderStatus.invitedAt` set. The composer states email reach as "members who opt in get email" or "followers who opt in get email", never as "email all your fans". A "Send a broadcast" shortcut on the My Pool dashboard follows the Prism My Pool batch (PR #264).
+- **Inbox.** New panel `inbox`, reached from a Bell icon button in the top bar (desktop and phone) with an unread dot. No rail item: the rail stays at seven destinations. Deep link: `app.amped.bio/inbox?b={broadcastId}`. Unread count polls every 60 seconds and on window focus. Muted creators do not count toward the badge.
 - **Stake flow opt in.** The stake confirmation adds the unticked email box from decision 2.
 - **Follow opt in.** The Fan Graph first-follow sheet and the Following menu carry the per creator "Email me {creator}'s updates" box (unticked). Both write the same preference as the stake box (3.3).
-- **Admin.** A "Broadcast review" view in the existing admin area.
+- **Admin.** Admin, Broadcasts: Review queue, Flagged sends, Reports, Pilot senders.
 - **Unsubscribe pages.** Public pages on `amped.bio` (landingpage) for "You will no longer get email from {creator}" with an undo button.
 
 ### 3.3 Data model
@@ -316,6 +296,7 @@ model BroadcastSenderStatus {
 
 Notes:
 
+- **Phase 1 ships** `Broadcast`, `BroadcastDelivery`, `BroadcastReport`, `BroadcastSenderStatus` and `NotificationPreference` (mute only) in migration `20261004120000_add_broadcast_inbox`. Phase 1 status values: IN_REVIEW, QUEUED, SENDING, SENT, REJECTED, CANCELED, FAILED. `idempotencyKey` is required. `reviewReason` (`first_send`) and `recipientEstimate` are added. `NotificationConsentEvent`, `EmailSuppression`, DRAFT, SCHEDULED, `ACCESS_RULE`, `FOLLOWERS` and `contentItemId` arrive with phase 2.
 - A member gets email only when all of these hold: global row `emailEnabled`, creator row `emailEnabled`, `mutedUntil` is null or past, `email_verified` is true, and the address is not in `EmailSuppression`.
 - `NotificationConsentEvent` is append only. It is the GDPR record of consent.
 - **Follow consent.** Fan Graph (#22) stores the per creator email opt-in on `Follow.email_updates` and `email_updates_at` until this spec ships. The Broadcast migration backfills: one creator row `emailEnabled = true` and one `NotificationConsentEvent` (source `follow_backfill`, `createdAt` = `email_updates_at`) per follow with `email_updates = true`. A global row with `emailEnabled = true` is created when none exists, because the fan gave an explicit per creator opt-in. From then on `NotificationPreference` is the only source of truth: `follow.follow` and `follow.update` call `notifications.setCreatorEmail` with source `follow_sheet` or `follow_menu`, Fan Graph reads the creator row, and a later migration drops `Follow.email_updates` and `email_updates_at`.
@@ -376,11 +357,13 @@ Unsubscribe tokens are HMAC signed over `{ userId, creatorUserId | 0, scope }` w
 
 ### 3.6 Delivery pipeline
 
-**Queue.** BullMQ on the existing Redis. New dependency `bullmq` in `apps/server`. A worker entry point in `apps/server/src/workers/broadcast.ts` runs as its own process in production so web requests never share CPU with fan out.
+**Phase 1 delivery (built).** Phase 1 has no email, so fan-out is a set of database inserts. `services/broadcast` claims a QUEUED broadcast with a conditional status update, writes delivery rows in chunks of 1,000 with `skipDuplicates`, and marks it SENT with the frozen `recipientCount`. It runs in the API process right after queueing. A sweeper every 60 seconds resumes broadcasts left QUEUED, or SENDING for over 5 minutes, after a restart. No new dependency and no worker process. Phase 2 adds BullMQ for per-recipient email jobs, as below.
+
+**Queue (phase 2).** BullMQ on the existing Redis. New dependency `bullmq` in `apps/server`. A worker entry point in `apps/server/src/workers/broadcast.ts` runs as its own process in production so web requests never share CPU with fan out.
 
 **Flow.**
 
-1. `send` validates ownership, quota, pause state and limits. It runs the content check on the server. A flagged broadcast, or the creator's first broadcast, goes to `IN_REVIEW`. A scheduled one goes to `SCHEDULED`. Otherwise `QUEUED`.
+1. `send` validates ownership, quota, pause state and limits. It runs the content check on the server. A flagged broadcast needs `confirmFlags` (decision 3). The creator's first broadcast goes to `IN_REVIEW`. A scheduled one goes to `SCHEDULED`. Otherwise `QUEUED`.
 2. A scheduler job moves `SCHEDULED` rows to `QUEUED` when due. An admin approval moves `IN_REVIEW` to `QUEUED`.
 3. **Fan out job** (`broadcast:fanout`, job id `fanout:{broadcastId}`). It resolves the audience and inserts `BroadcastDelivery` rows in chunks of 1,000 with `createMany({ skipDuplicates: true })`. It computes email eligibility per row and sets `PENDING` or `NOT_ELIGIBLE` with a reason. The inbox copy is live as soon as rows exist. Status moves to `SENDING`.
 4. **Email jobs** (`broadcast:email`, job id `email:{deliveryId}`). One job per recipient, added in bulk. One message per recipient. A global limiter caps throughput to the provider's rate (config `BROADCAST_EMAIL_RATE`, default 10 per second). A per creator limiter keeps one large pool from starving others.
@@ -428,11 +411,11 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 
 **Keyword check.**
 
-- One banned list covers product copy, templates, creator broadcasts and marketing. It lives in `packages/constants/src/broadcast.ts` as `BROADCAST_BANNED_TERMS`, grouped by category: yield (`apy`, `apr`, `yield`, `passive income`, `rewards grow`), returns (`roi`, `returns`, `profit`, `earn`, `guaranteed`, `double your`), price (`price target`, `moon`, `10x`, `pump`, `going up`), investment (`invest`, `investment`, `investors`, `dividend`), solicitation (`buy revo`, `stake more`, `add to your stake`).
+- One banned list covers product copy, templates, creator broadcasts and marketing. It lives in `packages/constants/src/broadcast.ts` as `BROADCAST_BANNED_TERMS`, grouped by category: yield (`apy`, `apr`, `yield`, `passive income`, `rewards grow`), returns (`roi`, `returns`, `profit`, `earn`, `guaranteed`, `double your`), price (`price target`, `to the moon`, `10x`, `pump`, `going up`), investment (`invest`, `investment`, `investors`, `dividend`), solicitation (`buy revo`, `stake more`, `add to your stake`).
 - Approved alternatives, shown next to a flag in the composer: member, membership, join, back, support, community update, member access, "members of my pool".
 - Matching is case insensitive on word boundaries after Unicode normalization. It runs in the composer as the creator types and again on the server at send.
-- A match holds the broadcast for admin review (decision 3). The creator can edit and send instead.
-- Counsel approves the list (decision 8).
+- A match warns and does not hold (decision 3). `send` refuses a flagged message until the creator confirms (`confirmFlags`), then sends it and stores the matched phrases in `flaggedTerms`. Admin, Broadcasts, Flagged sends lists them; an admin can remove a sent broadcast from every inbox.
+- The product team owns the list (decision 8). "moon" is listed as "to the moon", so a release called "new moon" is not flagged.
 
 **Report button.** On every inbox message and in every email footer. Reasons: financial promise, spam, harassment, other. Reports go to the admin queue.
 
@@ -440,7 +423,7 @@ Staking is flagged for securities counsel. Broadcast must not become a channel f
 
 **Fixed copy.** Templates and UI never mention rewards, returns or yield. The inbox and email footer carry fixed text the creator cannot edit: "{Creator} wrote this message. Amped.Bio delivers it and does not endorse it. Nothing in a broadcast is financial advice." It is stored as `BROADCAST_FOOTER` in `packages/constants/src/broadcast.ts`. Screenshots and demos keep it visible.
 
-**Automated check.** A script, `scripts/check-compliance-copy.ts`, runs in every build and in CI. It scans string literals and JSX text in the broadcast, inbox and notification components of `apps/client` and `apps/landingpage`, the email templates in `apps/server/src/utils/email/`, and any Broadcast marketing copy stored in the repo. It matches `BROADCAST_BANNED_TERMS` with the same rules as the composer check. Any match fails the build. The only exemptions are the policy text above and the word list itself.
+**Automated check.** Phase 1 ships the check as a server test (`apps/server/src/__tests__/broadcast.test.ts`, "compliance copy check"), which scans every string in the broadcast, inbox and admin broadcast components. The build script below follows when CI returns. A script, `scripts/check-compliance-copy.ts`, runs in every build and in CI. It scans string literals and JSX text in the broadcast, inbox and notification components of `apps/client` and `apps/landingpage`, the email templates in `apps/server/src/utils/email/`, and any Broadcast marketing copy stored in the repo. It matches `BROADCAST_BANNED_TERMS` with the same rules as the composer check. Any match fails the build. The only exemptions are the policy text above and the word list itself.
 
 **Marketing and disclosure rules.** These apply to all Broadcast marketing, demos and pilot material.
 
@@ -522,7 +505,7 @@ Events carry ids and counts only, never email or wallet address. Event names fol
 7. A member with email off, unverified email, an active mute or a suppressed address gets the inbox copy and no email.
 8. `POST /email/u/:token` with `List-Unsubscribe=One-Click` turns off that creator's email with no sign in and writes a consent event. The next broadcast from that creator is not emailed to them.
 9. A hard bounce or complaint webhook adds the address to `EmailSuppression`, and later sends skip it.
-10. A body containing "watch your rewards grow" is flagged in the composer and on the server. Sending without edits sets `IN_REVIEW`. No delivery rows exist until an admin approves.
+10. A body containing "watch your rewards grow" is flagged in the composer and on the server. `send` without `confirmFlags` is refused. With it, the broadcast sends and `flaggedTerms` holds the phrase.
 11. A creator's first broadcast goes to `IN_REVIEW` even when nothing is flagged.
 12. A fourth send in 24 hours is refused with a clear error.
 13. A member who unstakes after delivery can still read the text. `getAttachmentUrl` returns `FORBIDDEN` once they no longer meet the rule.
@@ -550,16 +533,16 @@ Overview launch stages: Pre-launch is phase 0. Launch is phase 1. Post-launch is
 - Fix `handle.getHandle` email exposure (D1).
 - Stop logging recipient addresses in `email.ts`.
 - Choose the provider and set up `send.amped.bio` with SPF, DKIM, DMARC (`p=none` with reporting, then `quarantine`), and reverse DNS.
-- Counsel approves the policy text, the fixed footer and the word list.
+- Counsel approves the policy text and the fixed footer.
 - Ship `scripts/check-compliance-copy.ts` in the build.
 - Recruit 15 pilot pool owners and set `invitedAt` for each. The invitation includes the FTC disclosure rule (3.8).
 - Gate to phase 1: D1 fix live and counsel sign-off recorded. No public promotion before both.
 
-**Phase 1: inbox only. November 2026 (proposed).**
+**Phase 1: inbox only. Built 2026-10-04 (branch `feat/broadcast-inbox`).**
 
-- Models, `broadcast.creator` and `broadcast.inbox`, BullMQ fan out, composer, inbox panel, content check, admin review, report button, rate limits.
+- Models, `broadcast.creator`, `broadcast.inbox` and `admin.broadcasts`, in-process fan-out with a sweeper, composer, inbox panel, content check (warn only), first-send review, report button, mute, rate limits, automatic pause, admin Broadcasts page.
 - `ALL_MEMBERS` audience only. No email yet.
-- Inbox stats: recipients, inbox reads and reports. Analytics events and `broadcast_daily_snapshot` from 3.9, so 90-day KPIs start at launch.
+- Inbox stats: recipients, inbox reads and reports. Analytics events and `broadcast_daily_snapshot` from 3.9 wait for the analytics foundation (#11), which has no server `track()` yet.
 - Behind `VITE_SHOW_BROADCAST` and `BROADCAST_INVITE_ONLY` for invited creators.
 
 **Phase 2: email and rules. December 2026 to January 2027 (proposed).**
@@ -606,6 +589,8 @@ Overview launch stages: Pre-launch is phase 0. Launch is phase 1. Post-launch is
 - RFC 8058, One-click unsubscribe: https://datatracker.ietf.org/doc/html/rfc8058
 
 ## Revision log
+
+2026-10-04: Phase 1 built. Rob's decisions: warn only on flagged language (3), product team owns the word list (8), Broadcasts as a My Pool tab until Fan Graph ships, phase 1 inbox only. Inbox reached from a top bar button, not a rail item. Phase 1 fan-out is in-process with a sweeper; BullMQ moves to phase 2. "moon" narrowed to "to the moon". Data model, 3.1, 3.2, 3.6, 3.8, acceptance 10 and phases updated.
 
 2026-10-03: Fan Graph (#22) edits. Decision 1 revised: `FOLLOWERS` audience kind in phase 2, `Broadcast.poolId` nullable, composer opens for any sender with followers, Broadcast moves into People. Consent sources `follow_sheet`, `follow_menu` and `follow_backfill`; follow email consent backfilled into `NotificationPreference`, which becomes the single source. Audience resolution, permissions, procedures, events and acceptance 1, 23, 25 to 27 updated.
 
