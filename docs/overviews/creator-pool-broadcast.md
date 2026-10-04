@@ -28,18 +28,18 @@ Broadcast gives every creator a direct, one-way line to the members of their cre
 **For Amped the business**
 
 - A weekly reason for fans to return to Amped, and a reason for creators to grow their pools.
-- A counsel-approved word list holds any message that mentions returns, yield or price for admin review. Every creator's first broadcast is reviewed too.
+- A word list flags any message that mentions returns, yield or price. The creator sees the flag and must confirm before sending. Admins see every flagged send and can remove one from inboxes. Every creator's first broadcast is reviewed before it goes out.
 - Rate limits of 3 broadcasts per creator per 24 hours and 10 per 7 days, across members and followers. Sending pauses automatically on high reports or complaints.
 - A separate sending domain keeps login and password emails safe if broadcast mail draws complaints.
 - The inbox becomes the base for two-way messaging (Build Board item #2).
 
 ## How it works
 
-1. The creator opens Broadcast in the editor. Pool owners see it at launch. From phase 2, after Fan Graph (#22), creators with followers see it too, as a tab in People.
+1. The creator opens My Pool, Broadcasts in the editor. Pool owners see it at launch. From phase 2, after Fan Graph (#22), creators with followers see it too, as a tab in People.
 2. They pick an audience: all members, or members who meet an access rule. Amped shows how many members match and how many will get email.
 3. They write the update. A content check highlights banned phrases as they type.
 4. They preview, send a test, then send now or schedule.
-5. Clean messages go out at once. Flagged messages, and each creator's first broadcast, wait for admin review.
+5. Messages go out at once. A flagged message needs one extra confirm from the creator and is recorded for admin follow-up. Each creator's first broadcast waits for admin review.
 6. Amped locks the recipient list at send time and posts the message to every member's inbox. A 10,000-member pool is covered within 60 seconds.
 7. Opted-in members get an email from "{Creator} via Amped.Bio". Attached files stay behind sign-in and never travel in the email.
 8. The creator sees delivery totals. Reports and spam complaints feed the automatic pause.
@@ -67,7 +67,7 @@ Newsletter tools reach email addresses, not verified members. Web3 community too
 
 - **Direct line.** Every member gets every update in their Amped inbox, and no feed decides who sees it.
 - **Member control.** Members choose email per creator and can mute or unsubscribe in one tap without leaving the community.
-- **Built safe.** Counsel-approved content checks, first-send review and rate limits protect creators, members and Amped.
+- **Built safe.** Content checks, first-send review, reports and rate limits protect creators, members and Amped.
 
 **Headline options**
 
@@ -94,7 +94,7 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 
 | Phase | Timing | Actions | Channels |
 |---|---|---|---|
-| Pre-launch | October 2026 (proposed) | Fix the public creator email exposure (D1). Stop logging recipient addresses. Counsel approves the policy text and word list. Set up the send.amped.bio sending domain. Recruit 15 pilot pool owners. | Creator outreach via Apollo.io. Direct messages on X. Teaser on Rob's LinkedIn. |
+| Pre-launch | October 2026 (proposed) | Fix the public creator email exposure (D1). Stop logging recipient addresses. Counsel approves the policy text and the fixed footer. Set up the send.amped.bio sending domain. Recruit 15 pilot pool owners. | Creator outreach via Apollo.io. Direct messages on X. Teaser on Rob's LinkedIn. |
 | Launch | November 2026 (proposed) | Inbox-only Broadcast for invited creators, sending to all members, with inbox totals. Publish the launch post and a 60-second creator walkthrough. | Amped blog. X. LinkedIn. TikTok and Instagram short video. AI Leader Edge podcast segment. |
 | Post-launch | December 2026 to January 2027 (proposed) | Turn on email opt-in, one-click unsubscribe and email stats. Add rule-based audiences once gating ships. Open to all pool owners. Publish 3 pilot case studies. | Amped blog case studies. LinkedIn and X threads. Short video creator testimonials. Apollo.io sequences to similar creators. |
 
@@ -110,7 +110,7 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 ## Compliance guardrails for marketing
 
 - **Securities.** REVO staking is under securities counsel review. No marketing or creator message may promise returns, yield, earnings or price movement. Describe joining a pool as membership in, and support for, a creator's community.
-- **Banned words** in marketing, templates and creator broadcasts: yield, APY, APR, returns, ROI, profit, earn, earning, earnings, passive income, rewards grow, guaranteed, double your, 10x, moon, pump, price target, going up, invest, investment, investors, dividend, buy REVO, stake more, add to your stake.
+- **Banned words** in marketing, templates and creator broadcasts: yield, APY, APR, returns, ROI, profit, earn, earning, earnings, passive income, rewards grow, guaranteed, double your, 10x, to the moon, pump, price target, going up, invest, investment, investors, dividend, buy REVO, stake more, add to your stake.
 - **Approved alternatives:** member, membership, join, back, support, community update, member access, "members of my pool".
 - **Fixed footer.** Every broadcast carries: "{Creator} wrote this message. Amped.Bio delivers it and does not endorse it. Nothing in a broadcast is financial advice." Keep it visible in screenshots and demos.
 - **Privacy.** Creators never see member emails. Demo screenshots use test accounts only. Do not promote Broadcast publicly until the creator email exposure (D1) is fixed.
@@ -124,27 +124,22 @@ Social post: "New on Amped.Bio: Broadcast. Send updates straight to your members
 
 **Screens**
 
-- [Composer with audience picker, content check and preview](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/img/creator-pool-broadcast-composer.png)
-- [Sent broadcasts and delivery stats](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/img/creator-pool-broadcast-stats.png)
-- [Fan inbox on mobile](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/img/creator-pool-broadcast-fan-inbox.png)
-- [Broadcast detail with preferences and report](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/img/creator-pool-broadcast-fan-detail.png)
-- [Broadcast email in a mail client](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/img/creator-pool-broadcast-email.png)
+Prism 2.2 boards br1 to br5 in the [design gallery](https://claude.ai/artifact/GKy9Lvcbg6zckkuDLHrYhv#br): composer, sent and totals, fan inbox, broadcast detail, email.
 
-**Open decisions for Rob**
+**Decisions (accepted by Rob, 2026-10-04)**
 
-1. **Audience.** Recommended: pool members at launch. Followers join in phase 2, after Fan Graph (#22) is in production, so creators without a pool can send to their followers too.
-2. **Email consent.** Recommended: explicit opt in, with an unticked box at join and a toggle in the inbox.
-3. **Flagged content.** Recommended: hold flagged broadcasts for admin review, with the option to edit and send at once.
-4. **Rate limits.** Recommended: 3 broadcasts per creator per 24 hours, 10 per 7 days, and admin review of each creator's first broadcast.
-5. **Access after leaving.** Recommended: members who unstake keep the text already delivered, but attachments lock.
-6. **Email provider.** Recommended: Amazon SES or Postmark on a dedicated send.amped.bio stream with bounce and complaint feedback.
-7. **Stats detail.** Recommended: totals only, with no per-member read, click or unsubscribe data.
-8. **Word list owner.** Recommended: securities counsel approves the initial list and every change.
+1. **Audience.** Pool members at launch. Followers in phase 2, after Fan Graph (#22).
+2. **Email consent.** Explicit opt in, unticked at join, toggle in the inbox. Phase 2.
+3. **Flagged content.** Warn only. The creator confirms Send anyway; admins see every flagged send.
+4. **Rate limits.** 3 per creator per 24 hours, 10 per 7 days, admin review of each creator's first broadcast.
+5. **Access after leaving.** Delivered text stays. Attachments lock.
+6. **Email provider.** Amazon SES or Postmark on send.amped.bio. Phase 2.
+7. **Stats detail.** Totals only.
+8. **Word list owner.** The product team.
 
 **Links**
 
-- [Full spec on GitHub](https://github.com/CosimoRob/amped-bio-new/blob/docs/wave1-specs/docs/features/creator-pool-broadcast.md)
-- [PR #3: Wave 1 specs](https://github.com/CosimoRob/amped-bio-new/pull/3)
+- Full spec: docs/features/creator-pool-broadcast.md
 - [Build Board](https://claude.ai/artifact/FK8J7ZXWEcYXg5zvHwffxh)
 
 ### Sources
