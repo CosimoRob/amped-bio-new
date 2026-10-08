@@ -48,7 +48,7 @@ One points balance cannot measure commitment and act as currency at the same tim
 | | Fan Score | Creator Points |
 |---|---|---|
 | Purpose | Status. How committed a fan is | Currency. What a fan can spend |
-| Scope | Per creator, plus a platform Passport total | Per creator only |
+| Scope | Per creator, plus a platform Passport total | Per creator. Amped Points are a separate platform currency (Decision 2) |
 | Spent | Never | In that creator's perk shop |
 | Transferable | No | No |
 | Cash value | None | None |
@@ -57,7 +57,7 @@ One points balance cannot measure commitment and act as currency at the same tim
 
 Airlines use the same split: miles are spent, status is earned.
 
-Points are scoped to one creator. Amped never sets an exchange rate between creators. Nothing becomes a platform-wide currency that looks like stored value or a security.
+Creator points are scoped to one creator. Amped never sets an exchange rate between creators or between creator points and Amped Points. Amped Points (Decision 2) are a platform currency with their own rules: earned for Amped account actions, spent only on Amped perks, non-transferable, no cash value, same 12 month expiry. They are not convertible to creator points, REVO or USDC, so nothing becomes stored value or a security.
 
 ## 3. Items
 
@@ -97,7 +97,7 @@ Off-platform social links stay on the bio as "encouraged, not rewarded". Connect
 **Perk shop.** Creators list perks priced in their points:
 
 - Creator perks at no cost to the creator: gated links and content through `reward_points` rules (#17), early access, vote on next content, shoutout, DM reply, merch discount codes, ticket presales, name in credits.
-- Amped perks: premium themes (#3), featured placement. Amped funds these from a platform budget.
+- Amped perks: premium themes (#3), featured placement. Priced in Amped Points (Decision 2) and funded from a platform budget. They do not appear in a creator's perk shop.
 - Brand perks (with #7): brands fund products, codes and sponsored quests shown to high-score fans.
 - Raffles allowed. Points are earned free, which satisfies no-purchase-necessary. Counsel reviews official rules per raffle.
 
@@ -127,7 +127,7 @@ Redemption is atomic. Points are debited only if stock remains. Delivery is a co
 - **Phase 1:** no REVO for quests. Points and Fan Score only.
 - **Phase 2:** USDC rewards on brand-sponsored quests once Revolution payments ship. A brand pays. A fan is compensated. Never framed as earning on holdings.
 - **Phase 3:** REVO rewards after counsel classifies REVO under the March 2026 interpretation. Until then REVO moves only through discretionary drops and open platform campaigns counsel approves.
-- **Faucet migration.** The signup, referral and daily faucets move from REVO to Amped platform points and Fan Score. This addresses the existing counsel flag on those faucets. Timing is an open decision (section 6).
+- **Faucets.** The signup, referral and daily REVO faucets keep running (Rob's decision, 2026-10-08). Amped Points are added for the same actions, so a new user earns both. The existing counsel flag on the REVO faucets stays open and is tracked in section 9; it is not resolved by this spec.
 
 ## 6. Decisions
 
@@ -139,8 +139,8 @@ Redemption is atomic. Points are debited only if stock remains. Delivery is a co
 
 **Open:**
 
-1. **Faucet migration.** Recommended: move signup, referral and daily faucets to points when #23 ships. Stop new REVO faucet issuance at the same time.
-2. **Platform points.** Recommended: Amped holds its own program (like a creator) so faucet replacements and Amped perks have a home.
+1. **Faucet migration.** Answered by Rob, 2026-10-08: keep the REVO faucets running alongside points. The recommendation was to move them to points and stop REVO issuance on one date. What changes: `wallet.getFaucetAmount`, `Referral` and the signup grant are untouched; the Amped Points program adds signup, referral and daily quests next to them; the counsel flag on REVO faucets stays on the section 9 list.
+2. **Platform points.** Answered by Rob, 2026-10-08: a separate platform currency with its own rules. The recommendation was an Amped program shaped like a creator's. What changes: a distinct ledger, Amped Points, with its own earn table (signup, referral, daily, connect X once, complete profile), its own perk list (premium themes, featured placement), its own issuance cap and expiry, and no exchange with creator points. Fan Score is unchanged. Quest templates and the perk shop code are shared; only the ledger and rules differ.
 
 ## 7. Positioning and marketing
 
@@ -169,7 +169,8 @@ Build order: #22, then #23, then #24.
 - Points and perks terms: no cash value, non-transferable, expiry, modification rights.
 - Staking weight in Fan Score.
 - Raffle official rules.
-- Faucet migration and the end of REVO faucet issuance.
+- REVO faucets continuing alongside Amped Points (existing flag, still open).
+- Amped Points terms as a separate platform currency: no cash value, no exchange with creator points, REVO or USDC.
 - USDC sponsored quests: tax reporting and sanctions screening.
 - REVO classification before any REVO reward.
 
@@ -184,3 +185,5 @@ Build order: #22, then #23, then #24.
 - https://www.federalregister.gov/documents/2026/08/18/2026-16796/genius-act-regulations-on-payment-stablecoin-issuance-offer-and-sale
 - https://www.musicbusinessworldwide.com/fandom-platform-fave-launches-ai-supported-tool-for-artists-to-identify-and-reach-their-biggest-fans/
 - https://techcrunch.com/2025/04/23/linktree-rolls-out-a-suite-of-monetization-features-for-creators/
+
+2026-10-08: Rob's decisions applied. Decision 1: REVO faucets keep running alongside points. Decision 2: Amped Points are a separate platform currency with their own rules (sections 2, 3, 5, 6 and 9 updated).
