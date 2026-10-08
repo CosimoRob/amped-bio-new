@@ -76,7 +76,6 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 - Payments, checkout and on/off ramps. Rob is building payments in the Revolution Network project. This spec defines `PaymentVerifier` only.
 - A points ledger. Section 3.1.6 states what `reward_points` needs.
 - The follow graph itself. Fan Graph (#22) owns it. This spec reads it.
-- Rule combinators (any/all). Reserved for v2 (Decision 2).
 - External wallets without an Amped account (SIWE). Future.
 - Gating the whole profile.
 - Content storage and broadcast delivery. Those specs own them and call this engine.
@@ -84,13 +83,13 @@ Creators mark any link, media or text block as "who can open this". Fans who mee
 ### Decisions for Rob
 
 1. **Stake data source.** Recommended: hybrid. Bio rendering uses a cached value (Redis, 60 s) seeded from chain. Opening a gated item always uses a chain read no older than 60 s. `confirmStake` and `confirmUnstake` purge the cache. The DB mirror (`StakedPool`) is used only for audience lists and stats, never to grant access. Reason: the mirror misses stakes made outside Amped, and chain reads for every block on every bio view are wasteful.
-2. **Combinators.** Recommended: none in v1. One resource references one rule. The schema reserves `kind: "any" | "all"` with `params.ruleIds` for v2. Reason: every real case in the Build Board is a single condition. Combinators double the test surface and the builder UI.
+2. **Combinators.** Answered by Rob, 2026-10-08: ship AND and OR now. The recommendation was none in v1. What changes: `kind: "all"` and `kind: "any"` join the v1 union with `params.ruleIds` (2 to 4 leaf rules, depth 1, no nesting). A resource still references one rule; that rule may be a combinator. The rule builder gains a group row (All of these, Any of these). The evaluator, the cache key, the stats page and the leak scan treat a combinator as one rule. See 3.1.2 and 3.3.
 3. **Which pools a creator can gate on.** Recommended: only the creator's own pool in v1. Reason: it keeps the gate a membership benefit of one creator's community. Gating on another creator's pool looks like cross promotion of a staking position.
 4. **Floor for `pool_member`.** Recommended: a platform floor of 1 REVO. Reason: a 1 wei stake is nearly free. The floor blunts dust wallets. `stake_min` rules cannot go below the same floor.
 5. **Grant lifetime.** Recommended: 10 minutes. Reason: long enough to stream a video or finish a download. Short enough that an unstake ends access quickly.
 6. **Who can unlock.** Recommended: signed in Amped users with a linked wallet. Reason: the wallet is already verified server side through Web3Auth. External wallets via SIWE come later.
 7. **Link destinations after redirect.** Recommended: accept that the fan sees the destination after the 302. Reason: any redirect ends at a real URL. Creators who need stronger control use a content item, which is served from signed S3 URLs. The builder states this plainly.
-8. **Counsel review.** Required before launch or public marketing of `stake_min` and `pool_member`. See section 3.9.
+8. **Counsel review.** Answered by Rob, 2026-10-08: launch and review in parallel. The recommendation was counsel sign off before launch. What changes: Phase 1 ships to the pilot allowlist behind `ACCESS_GATING_ENABLED` while counsel reviews the rule types, the copy and the stats screen. The banned words, approved alternatives and disclosure in 3.9 apply from day one and the build time copy check still fails the build. Counsel's comments are applied as a follow up change, not as a gate. Public marketing uses the same copy rules. See 3.9 and 3.11.
 
 ## 3. Detailed spec
 
@@ -251,7 +250,7 @@ export type AccessDecision = {
 };
 ```
 
-v2 reservation: `kind: "any" | "all"` with `params: { ruleIds: number[] }` (max 5, depth 1). Not in the union in v1.
+Combinators (v1, Rob's decision of 2026-10-08): `kind: "all" | "any"` with `params: { ruleIds: number[] }`. 2 to 4 leaf rules, depth 1. A leaf is any kind other than `all` or `any`; the zod schema rejects a combinator inside a combinator and a resource that points at a leaf used only inside a group may still point at it directly. `checkAccess` evaluates every leaf, short circuits nothing (so stats stay complete) and returns the first blocking leaf's `unlockHint` for `all` and the cheapest leaf's hint for `any`. `summary` is built from the leaves, for example "Members with 500 REVO staked or followers". The disclosure in 3.9 shows whenever any leaf is `stake_min` or `pool_member`. The builder shows a group as one card with its leaves listed and a toggle between All and Any.
 
 #### 3.1.3 Server API
 
@@ -330,7 +329,7 @@ payload {
 
 **Content system usage.** `content.getReadUrl({ contentItemId, grant })` calls `verifyAccessGrant`, then signs CloudFront URLs over the private content bucket (`content-system.md` 3.6). File URL expiry is `min(300, grant exp minus now)` or lower. The signed URL is returned in the response body. It never appears in SSR HTML.
 
-The 5 minute ceiling applies to every file URL issued under a grant. Blur previews and public item URLs follow the content spec TTL table. Video and audio use Mux signed playback tokens. A Mux token must cover the full playback, so its lifetime is the media length plus 10 minutes, capped at 4 hours, and may exceed the 10 minute grant. This stream exception is accepted by this spec (see 3.6). The grant still gates issuance: no token is minted without a valid grant.
+The 5 minute ceiling applies to every file URL issued under a grant. Blur previews and public item URLs follow the content spec TTL table. Video uses Cloudflare Stream signed tokens (Rob, 2026-10-08) and gated audio uses a CloudFront signed URL sized the same way. A Stream token must cover the full playback, so its lifetime is the media length plus 10 minutes, capped at 4 hours, and may exceed the 10 minute grant. This stream exception is accepted by this spec (see 3.6). The grant still gates issuance: no token is minted without a valid grant.
 
 **Broadcast usage.** Opening a gated broadcast calls `access.issueGrant({ resource: { type: "broadcast", id } })` and then the broadcast body endpoint with the grant. Email or push delivery never includes the gated body. It includes a link back to Amped.
 
@@ -472,7 +471,7 @@ Batch: `checkAccessBatch` groups resources by rule, reads each rule once, and re
 | Leakage after unlock | Links: inherent after redirect, stated to creators (Decision 7). Files: CloudFront signed URLs expire in 5 minutes or less. Text and media: returned only in the `revealBlock` response. |
 | Grant replay by another user | `sub` must match the session user. `rid`, `aud` and `rv` must match. 10 minute `exp`. Optional single use `jti`. |
 | Forged wallet | Wallet comes only from `ctx.user.wallet`, which was linked through a verified Web3Auth ID token. No client supplied address is accepted. |
-| Stale stake (unstaked outside Amped) | Open time reads are at most 60 s old. Grants last 10 minutes. Worst case for new opens after unstake is about 11 minutes. Stream exception: a video or audio play session already started may finish, up to the 4 hour Mux token cap (3.1.4). The next play session is denied. |
+| Stale stake (unstaked outside Amped) | Open time reads are at most 60 s old. Grants last 10 minutes. Worst case for new opens after unstake is about 11 minutes. Stream exception: a video or audio play session already started may finish, up to the 4 hour Stream token cap (3.1.4). The next play session is denied. |
 | Stake, unlock, unstake loop | Same bound as above. Access is per visit. Nothing permanent is handed out except a link destination, which Decision 7 covers. |
 | Sybil wallets | One wallet per account and one account per wallet (existing unique keys). 1 REVO floor. Creators set higher levels with `stake_min`. |
 | Chain RPC outage | Fail closed on open. Show "We could not confirm membership right now" with retry. |
@@ -482,7 +481,7 @@ Batch: `checkAccessBatch` groups resources by rule, reads each rule once, and re
 
 ### 3.7 Integration points for sibling specs
 
-- **Content system (#18, and stake-gated content, formerly #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before signing CloudFront URLs or minting Mux tokens. Log `locked_view` for locked content renders so the 90-day KPIs cover content items. Members-only content ships no earlier than 2 weeks after Phase 1 of this spec (3.11).
+- **Content system (#18, and stake-gated content, formerly #19).** Add `accessRuleId` to `ContentItem`. Register a resolver for `"content"`. Use `issueGrant` then `verifyAccessGrant` before signing CloudFront URLs or minting Stream tokens. Log `locked_view` for locked content renders so the 90-day KPIs cover content items. Members-only content ships no earlier than 2 weeks after Phase 1 of this spec (3.11).
 - **Broadcast.** Add `accessRuleId` to `Broadcast`. Register a resolver for `"broadcast"`. Use `listEligibleUserIds` for targeting and `checkAccess` at open time.
 - **Pool explorer.** May show "Members get access to N items" using `access.rules.list` counts for that pool. It must not show this next to APY or pool performance figures. The pool page calls `access.trackPoolVisit` when opened with `?ref=gate`.
 - **Brand portal.** Can reuse `stake_min` and `pool_member` rules for brand campaign items once resolvers exist. No new kinds in v1.
@@ -499,7 +498,7 @@ Server side, written to `AccessEvent`:
 | `unlocked` | Attempt passed |
 | `link_redirect` | `/go` returned 302 to the destination |
 | `grant_issued` | `issueGrant` succeeded |
-| `content_url_issued` | Content spec signed a CloudFront URL or minted a Mux token |
+| `content_url_issued` | Content spec signed a CloudFront URL or minted a Stream token |
 | `pool_visit` | Pool page opened from a gate link, through `access.trackPoolVisit` |
 
 - `check`, `denied` and `unlocked` are deduplicated per viewer key and resource for 10 minutes. Redis `SET NX EX 600` on `access_attempt:{viewerKey}:{type}:{rid}`. The viewer key is `u:{userId}` when signed in. Otherwise it is the first 16 hex characters of `sha256(ip + daily salt)`. The IP itself is never stored.
@@ -525,7 +524,7 @@ Rule lifecycle events for product analytics: `access_rule_created`, `access_rule
 
 One list covers product copy and marketing. It matches the business overview's "Compliance guardrails for marketing".
 
-- **Counsel sign-off first.** Stake-based gates (`stake_min`, `pool_member`) cannot launch or be marketed publicly until securities counsel approves the rule types, the copy and the stats screen. Access tied to staking can look like a benefit of an investment. Pilot outreach uses counsel-approved copy only.
+- **Counsel review in parallel (Rob, 2026-10-08).** Stake-based gates (`stake_min`, `pool_member`) launch to the pilot allowlist while securities counsel reviews the rule types, the copy and the stats screen. Access tied to staking can look like a benefit of an investment, so every string follows this section from the first build and counsel's changes are applied when they arrive. Pilot outreach uses copy that passes the automated check. Counsel receives the rule list, the copy and the stats screen before Phase 1 ships.
 - **Securities.** Never promise returns, yield, earnings or price movement. Gates unlock creator content only. They never grant tokens, revenue share, discounts or any economic benefit, and copy must not imply otherwise.
 - **Banned words** near a gate and in gating marketing: earn, yield, return, returns, reward for staking, profit, APY, APR, invest, investment, passive income, price, gains, unlock value. The list lives in `packages/constants/src/compliance.ts` as `ACCESS_BANNED_TERMS`.
 - **Approved alternatives:** member, membership, members only, access, join, support, back, "members of my pool".
@@ -564,13 +563,13 @@ Timings follow the business overview launch plan. All dates are proposed.
 
 | Phase | Timing | Scope | Gate |
 |---|---|---|---|
-| 0 | October to November 2026 (proposed) | Counsel review of rule types, copy and the stats screen. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry, `compliance.ts` list and disclosure. D1 email fix in `handle.getHandle`. Recruit 10 pilot creators with counsel-approved outreach copy. | Counsel sign off. D1 fix live. Sibling spec owners confirm contract. |
-| 1 | December 2026, after counsel sign off (proposed) | Engine with `stake_min` and `pool_member`. Link blocks only. `/go`. Locked DTO. SEO and share preview exclusions. Rule builder. Analytics events from 3.8 and the compliance copy check, so 90-day KPIs start at launch. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist of the 10 pilot creators. | Counsel sign off recorded. SSR leak test green and nightly leak scan clean before any public post. |
+| 0 | October to November 2026 (proposed) | Counsel review of rule types, copy and the stats screen starts. Contract merged: Prisma models, `@repo/constants` access schemas, resolver registry, `compliance.ts` list and disclosure. D1 email fix in `handle.getHandle`. Recruit 10 pilot creators with outreach copy that passes the compliance check. | Counsel review started and materials delivered. D1 fix live. Sibling spec owners confirm contract. |
+| 1 | December 2026 (proposed) | Engine with `stake_min`, `pool_member`, `all` and `any`. Link blocks only. `/go`. Locked DTO. SEO and share preview exclusions. Rule builder. Analytics events from 3.8 and the compliance copy check, so 90-day KPIs start at launch. Behind flag `ACCESS_GATING_ENABLED` and a creator allowlist of the 10 pilot creators. Counsel review runs in parallel. | SSR leak test green and nightly leak scan clean before any public post. |
 | 2 | January to February 2027 (proposed) | Media and text reveal. `issueGrant` for content (#18, and stake-gated content, formerly #19) and broadcasts. Members-only content (content spec Phase 2) connects here, no earlier than 2 weeks after Phase 1 ships. Rules and stats page. General availability for stake based kinds: open to all pool owners. `follower` kind live, open to every creator (no pool needed), once Fan Graph (#22) is in production. | Pilot unlock rate and error rate reviewed. Fan Graph (#22) in production. |
 | 3 | Later, no date | `paid` via the Revolution payments `PaymentVerifier` (#16, #18). `reward_points` ledger (#17). | Payments shipped. Counsel review of points and paid copy. |
-| 4 | Later, no date | Combinators (`any`, `all`). SIWE for external wallets. | Demand from creators. |
+| 4 | Later, no date | Nested combinators. SIWE for external wallets. | Demand from creators. |
 
-Gating ships before any members-only content or gated broadcast. Those features depend on Phase 1 being live and on the counsel sign off above.
+Gating ships before any members-only content or gated broadcast. Those features depend on Phase 1 being live.
 
 ## Sources
 
@@ -595,3 +594,5 @@ Gating ships before any members-only content or gated broadcast. Those features 
 2026-10-03: Fan Graph (#22) edits. `follower` moves from Phase 4 to Phase 2 and reads `Follow` (ACTIVE = verified email, not suspended, not blocked). Added `not_follower` reason and `follow` unlock hint. Followers sits in the rule builder between Everyone and Pool members. `listEligibleUserIds` gains a Follow resolver. Acceptance 2 and 12 updated, 18 added.
 
 2026-09-26: aligned with business overview (added overview link; D1 email exposure noted and made a launch gate; share preview exclusion and a nightly leak scan added; builder labels set to "Later" with Points in place of Reward points; unlock sheet shows the disclosure in every step for stake rules; banned words, approved alternatives, disclosure, placement, privacy, later features and FTC rules matched to the overview as one product plus marketing list; build-time copy check added; stream exception and CloudFront wording aligned with the content spec; attempt dedupe, `intent` on `access.check`, `pool_visit`, adoption snapshot and leak scan events plus a KPI to event table added; phases given proposed timings, counsel and D1 gates and the gating before members-only content dependency; acceptance criteria 12 to 17 added and 3, 5 and 9 tightened).
+
+2026-10-08: Rob's decisions applied. Decision 2: combinators `all` and `any` ship in v1 (3.1.2, 3.3, Phase 1; Phase 4 keeps nesting). Decision 8: launch and counsel review run in parallel (3.9, 3.11; no sign off gate on Phase 0 or 1). Video tokens renamed from Mux to Cloudflare Stream after the content system vendor decision (3.1.4, 3.6, 3.7, 3.8).
