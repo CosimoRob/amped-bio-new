@@ -116,7 +116,7 @@ Most of the explorer already exists. This document is a gap analysis plus the ta
 
 | Surface | Where | Who | Purpose |
 |---|---|---|---|
-| Public explorer | `amped.bio/pools` (see Decision 1) | Anyone, no account | Discovery, SEO, verification, share links |
+| Public explorer | `explore.amped.bio` (see Decision 1) | Anyone, no account | Discovery, SEO, verification, share links |
 | In-app explorer | Explore panel in the editor at `app.amped.bio` | Logged-in users | Discovery plus "Your stakes", followed creators and watched pools (Following), stake and unstake in place |
 
 Both surfaces call the same `pools.explorer.*` procedures and render the same components from `packages/ui`.
@@ -147,30 +147,30 @@ Both surfaces call the same `pools.explorer.*` procedures and render the same co
 
 ### Decisions for Rob
 
-1. **Where the public explorer lives.** Recommended: `amped.bio/pools` and `amped.bio/pools/{address}`, served by `apps/landingpage`, with 301 redirects from `/i/pools/*`.
-   - SEO: a subfolder inherits the domain authority that bios build. Bios link to pools and pools link to bios, so every page strengthens the other. A subdomain such as `explore.amped.bio` is a separate property in Search Console and splits that authority.
-   - Brand: "outside Amped.Bio" is met by the shell. The explorer has its own header, needs no account and no editor. It is outside the product, not outside the domain.
-   - Cost: none. It is the same Next.js app.
-   - Requirement: `pools` must become a reserved handle. There is no reserved-handle list in the codebase today. Add one in `packages/constants` (at least `pools`, `i`, `blog`, `login`, `register`, `sign`, `auth`, `og`, `explore`, `creators`, `activity`) and check whether a user already holds any of them.
-   - Alternative: if Rob wants a Revolution Network branded explorer for all chain activity, host it on the Revolution domain from the same code, with each pool page's canonical pointing to `amped.bio/pools/{address}`. Build that only after mainnet.
+1. **Where the public explorer lives.** Answered by Rob, 2026-10-08: `explore.amped.bio`. The recommendation was `amped.bio/pools`. What ships: `explore.amped.bio/pools` (list, and the home of the subdomain), `explore.amped.bio/pools/{address}` (detail), `explore.amped.bio/@{handle}` (301 to the handle's pool), with 301 redirects from `amped.bio/i/pools/*`. Served by `apps/landingpage` from the same build: `src/proxy.ts` maps the `explore.amped.bio` host to the `/explore` route group, so one Next.js app serves both hosts and no second deploy exists.
+   - SEO: a subdomain is its own Search Console property, so the explorer earns authority on its own. To limit the split: every bio with a pool links to its explorer page, every explorer page links back to the bio, `explore.amped.bio/sitemap.xml` is registered next to the main sitemap, and each pool page carries a self canonical. Brand search for a creator still lands on the bio.
+   - Brand: the subdomain reads as a destination outside the product, which is the point. It has its own header, needs no account and no editor.
+   - Cost: none beyond DNS and a certificate. Same app, same components.
+   - Requirement: `explore` and `pools` become reserved handles. There is no reserved-handle list in the codebase today. Add one in `packages/constants` (at least `pools`, `i`, `blog`, `login`, `register`, `sign`, `auth`, `og`, `explore`, `creators`, `activity`) and check whether a user already holds any of them.
+   - Later: a Revolution Network branded explorer for all chain activity can be hosted on the Revolution domain from the same code, with each pool page's canonical pointing to `explore.amped.bio/pools/{address}`. Build that only after mainnet.
 2. **Reward rate (APR) display.** Recommended: hide it on both surfaces until securities counsel signs off. Show "Not shown while under compliance review" with a link to a neutral explainer of how network rewards reach a pool. If counsel approves display, the label becomes "Historical reward rate, trailing 30 days. Variable. Not a forecast or a promise of future rewards." It is never a sort key or a column. Remove the "24-Hour Average APR" figure and the public `debug-apy` link now.
 3. **Staker identity.** Recommended: show truncated wallet addresses by default. Show an Amped handle next to a stake only when that user turns on "Show my stakes publicly" (default off). Wallet addresses are public on chain; linking them to a person is Amped's act and needs consent.
 4. **Listing floor.** Recommended: list a pool in the public explorer only when it has a name, an image or description, a creator with a handle, and at least one staker other than the creator. Unlisted pools stay reachable by direct link with `noindex`. This keeps the default view free of empty test pools.
 5. **Pools not created through Amped.** The indexer will find factory pools with no Amped account behind them. Recommended: show them in the explorer with address and on-chain data only, marked "No Amped profile", and never in the default sort's first page.
-6. **"Fans" or "Stakers".** Recommended: "Stakers" in the explorer (descriptive, matches chain data), "Supporters" on the creator's own bio if Rob prefers a warmer word there.
+6. **"Fans" or "Stakers".** Answered by Rob, 2026-10-08: "Stakers" in the explorer only. The explorer's tables, sort labels and stat cards say Stakers, which matches the chain data. The creator's bio, the pool block, the stake panel and the in-app pools directory keep "fans" as the approved 070 and 071 Prism boards show ("Backed by 212 fans"). No third word; "Supporters" is dropped.
 7. **Leaderboard panel.** Recommended: delete the mock panel and point its nav item to the in-app explorer sorted by stakers.
 
 ## 3. Detailed spec
 
 ### 3.1 Screens
 
-**Public explorer, list** (`amped.bio/pools`)
+**Public explorer, list** (`explore.amped.bio/pools`)
 
 ![Public explorer list, desktop](img/creator-pool-explorer-home.png)
 
 Dark hero with four network totals for creator pools only. Search, sort, filters and a list or grid toggle. Category chips. Table columns: rank, pool (avatar, name, handle), category, total staked, stakers, 30-day staker change with sparkline, creator take rate, created. Footer states row range, the last update and the block height. Disclaimer below the table. No reward rate column.
 
-**Public explorer, pool detail** (`amped.bio/pools/{address}`)
+**Public explorer, pool detail** (`explore.amped.bio/pools/{address}`)
 
 ![Pool detail, desktop](img/creator-pool-explorer-pool-detail.png)
 
@@ -374,10 +374,10 @@ Existing procedures:
 
 - **Shared components** in `packages/ui/src/explorer/`: `PoolTable`, `PoolCard`, `PoolStatCards`, `StakeHistoryChart`, `ActivityTable`, `PerksList`, `TopStakers`, `ExplorerDisclaimer`. Tailwind only. Icons from `lucide-react`. These replace the duplicated `PoolsTab` and `PoolDetailContent` in both apps.
 - **Public site** (`apps/landingpage`):
-  - `src/app/pools/page.tsx`: server component. Reads `searchParams` for `q`, `category`, `sort`, `cursor` so filtered views have shareable URLs. `revalidate = 60`.
-  - `src/app/pools/[address]/page.tsx`: server component with `generateMetadata`, JSON-LD per the SEO spec, `revalidate = 60`. Client islands only for chart range, activity filters, Watch and Stake.
-  - `/pools/@{handle}`: 301 to the handle's pool address, for readable share links. Handle it in `src/proxy.ts`, which already rewrites `/@handle`. A folder named `@[handle]` would be read by Next.js as a parallel route slot.
-  - `next.config` redirects: `/i/pools` to `/pools`, `/i/pools/:address` to `/pools/:address` (301).
+  - `src/app/explore/pools/page.tsx`: server component, served at `explore.amped.bio/pools` through the host rewrite in `src/proxy.ts`. `explore.amped.bio/` redirects here. Reads `searchParams` for `q`, `category`, `sort`, `cursor` so filtered views have shareable URLs. `revalidate = 60`.
+  - `src/app/explore/pools/[address]/page.tsx`: server component with `generateMetadata`, self canonical on `explore.amped.bio`, JSON-LD per the SEO spec, `revalidate = 60`. Client islands only for chart range, activity filters, Watch and Stake.
+  - `explore.amped.bio/@{handle}`: 301 to the handle's pool address, for readable share links. Handle it in `src/proxy.ts`, which already rewrites `/@handle` on the main host. A folder named `@[handle]` would be read by Next.js as a parallel route slot.
+  - `next.config` redirects on the main host: `/i/pools` to `https://explore.amped.bio/pools`, `/i/pools/:address` to `https://explore.amped.bio/pools/:address` (301). Requests for `/explore/*` on `amped.bio` redirect to the subdomain so there is one URL per page.
   - `debug` and `debug-apy` move to the admin area of the editor.
   - Header nav: Pools, Creators, Activity, Blog. Network pill. Connect wallet. Create your pool.
 - **Stake from the public site.** The Stake REVO button opens the shared stake modal on the public page when the viewer is logged in (the landing page already has `trpcClient` and wagmi). When logged out, it opens login and returns to the same pool page. This removes the broken `{PANEL_URL}/i/pools/{address}` link.
@@ -388,7 +388,7 @@ Existing procedures:
 Rules for every pool surface, public and in-app, and for all explorer marketing. One list covers product and marketing.
 
 1. **Banned words.** Never use: earn, earning, earnings, yield, returns, passive income, APY, APR, profit, invest, investment, gains, moon, key price. The list lives in `packages/constants/src/compliance.ts` as `EXPLORER_BANNED_TERMS`.
-2. **Approved alternatives.** Describe mechanics, not outcomes: stake, unstake, claim, back, support, join, members, community, take rate, "rewards the network distributes to the pool". UI labels say "Stakers" per Decision 6. Marketing copy may say "members".
+2. **Approved alternatives.** Describe mechanics, not outcomes: stake, unstake, claim, back, support, join, members, community, take rate, "rewards the network distributes to the pool". Explorer UI labels say "Stakers" per Decision 6; the bio, pool block and stake panel say "fans". Marketing copy may say "members".
 3. **Securities.** REVO staking is under securities counsel review. Never promise returns, yield, earnings or price movement. Describe staking as backing a creator and joining their membership.
 4. **APR stays hidden.** No reward rate, APR or APY on any surface until securities counsel signs off. The reward rate card reads "Not shown while under compliance review". The approved label per Decision 2 applies only after sign-off.
 5. **No ranking by money.** Never sort, rank or highlight pools by rewards paid or reward rate. Rising uses staker growth only.
@@ -525,7 +525,7 @@ Overview launch stages: Pre-launch covers phases 0 and 1. Launch is phase 2. Pos
 |---|---|---|---|---|
 | 0. Hotfix (days) | October 2026 (proposed) | Copy pass (3.7). Hide APR on every surface. Remove public debug links and move debug pages behind admin login. Fix the Stake deep link. Remove mock Leaderboard. Add pool name and handle to `getPools` search. `hidden` check in `getPoolByAddress`. Ship `scripts/check-compliance-copy.ts` in the build. | None. Ships first. | Criteria 6, 7, 10, 13, 16 |
 | 1. Data layer | October 2026 (proposed) | Migration. Indexer and backfill from the factory deployment block. `PoolStats`, `PoolSnapshot`. `explorer.list`, `get`, `history`, `activity`, `stats`. `indexer_lag_sampled` and `explorer_listing_snapshot`. In-app nudge in My Pool to complete the fields that count toward `completeness`. | Counsel review of the disclaimer, stake modal copy and the "How network rewards reach a pool" article starts here. | Criteria 1, 2, 3 |
-| 2. Public explorer (launch) | December 2026 (proposed) | `/pools` routes, redirects from `/i/pools`, server-rendered detail, shared `packages/ui` components, reserved handles, categories, disclaimer, default sort by stakers. Funnel and traffic analytics events from 3.11, so 90-day KPIs start at launch. | Counsel sign-off on the disclaimer and stake modal copy. The `handle.getHandle` email exposure fix (Broadcast D1) is live, since pool pages link to creator bios. | Criteria 4, 5, 11, 15, 17, 18 |
+| 2. Public explorer (launch) | December 2026 (proposed) | `explore.amped.bio` host, `/pools` routes, redirects from `/i/pools`, DNS and certificate, separate Search Console property and sitemap, server-rendered detail, shared `packages/ui` components, reserved handles, categories, disclaimer, default sort by stakers. Funnel and traffic analytics events from 3.11, so 90-day KPIs start at launch. | Counsel sign-off on the disclaimer and stake modal copy. The `handle.getHandle` email exposure fix (Broadcast D1) is live, since pool pages link to creator bios. | Criteria 4, 5, 11, 15, 17, 18 |
 | 3. In-app explorer | First quarter 2027 (proposed) | Explore panel rebuild (Users renamed Creators), "Your stakes", watched pools as the Pools chip in Following, in-place detail and stake. `showStakesPublicly` setting. | Phase 2 live. Fan Graph (#22) Following tab live. | Criteria 9, 12, 20 |
 | 4. Perks and growth | First quarter 2027 (proposed) | Perks panel from `AccessRule`. Rising sort. Creators and Activity tabs. Remaining analytics events. Sitemap entries for the SEO spec. | Access gating engine ships its public rule summary function. SEO spec (item #10) sitemap in place. | All KPI measurements in 3.11 live |
 | Later | Not scheduled | Reward rate display if counsel approves. Mainnet network selector. Revolution-branded host. | Securities counsel sign-off for reward rate. Rob's decision. | Rob's decision |
@@ -552,3 +552,5 @@ Overview launch stages: Pre-launch covers phases 0 and 1. Launch is phase 2. Pos
 2026-10-03: Fan Graph (#22) edits. Explore tabs become Creators, Pools, Following; the Watchlist tab is dropped and watched pools become a Pools chip inside Following. Pool detail header gains Follow (source `pool`); Creators tab rows carry Follow (source `explore`). `explorer.creators` lists published pages only. Acceptance 20 added; phase 3 depends on the Following tab.
 
 2026-09-26: aligned with business overview (added overview link; default sort changed to stakers, total staked kept as an option; banned-word list, approved alternatives and compliance rules matched to the overview as one product plus marketing list; disclaimer text matched exactly and the wrong "refreshes every 5 minutes" line removed; build-time banned-word check added; traffic source, stake flow id, listing floor and indexer lag analytics plus a KPI to event table added; phases given proposed timings and gates for counsel sign-off, the D1 email fix and the gating engine; analytics moved to launch; acceptance criteria 16 to 19 added and 7 and 15 tightened).
+
+2026-10-08: Rob's decisions applied. Decision 1: the public explorer lives at `explore.amped.bio` (routes, redirects, reserved handles, SEO mitigations and Phase 2 scope updated). Decision 6: "Stakers" in the explorer only; bio, pool block, stake panel and directory keep "fans" per the Prism boards.
