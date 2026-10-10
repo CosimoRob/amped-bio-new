@@ -38,6 +38,7 @@ This is the base layer for paid content (#18), stake-gated content (formerly #19
 | **Linktree** digital products | 100 MB per file, 1 GB and 24 files per product. Explicit format list. Access by one time login code. | Explicit allowlist shown in the uploader. Free or paid as a single product toggle. | Hard 100 MB cap. Creators want video. |
 | **Substack** video | Up to 20 GB. Creator picks a free preview segment. Free viewers get an upgrade prompt at the end of the preview. | Creator chosen preview for audio and video. The unlock prompt appears where the preview ends. | 20 GB uploads. Cost without matching demand at our stage. |
 | **Mux** signed playback | Assets carry a `signed` playback policy. Playback needs an RS256 JWT with `sub`, `aud`, `exp`. Thumbnails and storyboards need their own tokens. Referrer restrictions. DRM add on. | Per viewer JWT with short expiry. Separate thumbnail tokens. Referrer allowlist. | Setting token expiry shorter than the video. Mux warns this cuts playback mid stream. |
+| **Cloudflare Stream** signed URLs | Videos with `requireSignedURLs` play only with an RS256 JWT (`sub` video id, `kid`, `exp`, `nbf`, optional `accessRules` by country or IP). Thumbnails need the same token. Allowed origins per video. Webhooks on ready and error. Clipping makes a new video from a range. No audio only uploads, no DRM. | Per viewer JWT with short expiry. Allowed origins. A separate preview clip per locked video. Audio stays on S3 plus CloudFront. | Token expiry shorter than the video. Playback stops at expiry. |
 | **CloudFront** signed URLs and cookies | AWS: use signed URLs for individual files, signed cookies for many files such as HLS segments. Signed URLs take precedence if both are present. | Signed URLs for images and documents. Signed cookies only if we self host HLS. | Mixing both on the same path. |
 | **Bunny Stream** | Free encoding, storage from $0.01 per GB, CDN from $0.005 per GB, token auth included. | Cost floor reference and fallback vendor. | Region based pricing surprises. We state the tier we assume. |
 
@@ -55,28 +56,28 @@ Sources are listed at the end.
 
 ### 1.5 Monthly cost estimate
 
-**Assumptions.** 30% of creators upload content in a month. Each active creator stores 20 video minutes and 0.3 GB of non video files. Fans watch 200 video minutes and pull 2 GB of images and documents per active creator per month. Each active creator uploads 1 GB per month, of which 20% is downloadable files that need malware scanning. 10 images per active creator go through an adult content classifier. Prices are US list prices on 2026-09-26. The recommended stack is S3 plus CloudFront for files, Mux for video and audio, GuardDuty for malware, PhotoDNA for CSAM.
+**Assumptions.** 30% of creators upload content in a month. Each active creator stores 20 video minutes and 0.3 GB of non video files. Fans watch 200 video minutes and pull 2 GB of images and documents per active creator per month. Each active creator uploads 1 GB per month, of which 20% is downloadable files that need malware scanning. 10 images per active creator go through an adult content classifier. Prices are US list prices on 2026-09-26. The stack is S3 plus CloudFront for files and audio, Cloudflare Stream for video (Rob, 2026-10-08), GuardDuty for malware, PhotoDNA for CSAM.
 
 | Line item | 1k creators (300 active) | 10k creators (3,000 active) | 100k creators (30,000 active) |
 |---|---|---|---|
 | Video minutes stored / delivered | 6k / 60k | 60k / 600k | 600k / 6M |
-| **Mux** (storage $0.0024/min, delivery $0.0008/min after 100k free, basic encoding free) | $14 | $544 | $6,160 |
+| **Cloudflare Stream** ($5 per 1k min stored, $1 per 1k min delivered, encoding free) | $90 | $900 | $9,000 |
 | S3 Standard for non video ($0.023/GB) | $2 | $21 | $207 |
 | CloudFront egress (1 TB free, then $0.085 to $0.060/GB) | $0 | $435 | $4,670 |
 | GuardDuty Malware Protection for S3 ($0.09/GB, $0.215 per 1k objects), downloadable files only | $6 | $56 | $560 |
 | PhotoDNA Cloud Service (CSAM hash matching) | $0 | $0 | $0 |
 | Rekognition image moderation ($0.001/image) | $3 | $30 | $300 |
 | Processing workers (SQS plus Lambda) | $5 | $30 | $250 |
-| **Total, recommended stack** | **about $30** | **about $1,120** | **about $12,150** |
-| Alternative video: Cloudflare Stream ($5 per 1k min stored, $1 per 1k min delivered) | $90 | $900 | $9,000 |
+| **Total, chosen stack** | **about $106** | **about $1,480** | **about $14,990** |
+| Alternative video: Mux (storage $0.0024/min, delivery $0.0008/min after 100k free, $20 minimum) | $20 | $544 | $6,160 |
 | Alternative video: Bunny Stream (standard tier, about $0.01/GB delivery, 2 storage regions) | $20 | $195 | $1,950 |
 | Alternative files: Cloudflare R2 in place of S3 plus CloudFront (no egress fee) | $1 | $14 | $140 |
 
 Notes:
 
-- Mux has a $20 monthly minimum on pay as you go. The 1k column is effectively $20.
+- Cloudflare Stream has no minimum and no egress line. The 1k column is the stored and delivered minutes only.
 - At 100k creators, CloudFront egress is the largest file line. Moving files to R2 saves about $4,700 per month at that scale. We revisit when egress passes 20 TB per month.
-- Mux is not the cheapest video option. We pick it for signed playback, instant playback, audio support and the player. Bunny is about $4,000 cheaper per month at 100k creators. The video provider sits behind an adapter, so a switch is contained.
+- Cloudflare Stream is not the cheapest video option. Rob chose it so VOD and live streaming (#27) share one account, one token model and one adapter. Bunny is about $7,000 cheaper per month at 100k creators and Mux about $2,800. The video provider sits behind an adapter, so a switch is contained. Audio is not a Stream line: Stream takes no audio only uploads, so audio is transcoded by our worker and served from S3 plus CloudFront.
 - Thorn Safer, if chosen over PhotoDNA, is priced by quote.
 
 ## 2. Overview
@@ -105,7 +106,7 @@ Creators upload video, audio, images, documents and files once, then place them 
 
 - Paid unlock (`paid` rule). Payments are on hold. The editor shows it as "Later."
 - Live streaming.
-- Full DRM (Widevine, FairPlay). Mux offers it as an add on if a creator segment needs it.
+- Full DRM (Widevine, FairPlay). Cloudflare Stream does not offer it. If a creator segment needs it, the adapter allows a second provider for those items.
 - PDF stamping and video watermarking. Phase 3.
 - Collections and playlists. Phase 3. The "New collection" button in the library mockup is a Phase 3 placeholder.
 - Comments and likes on content.
@@ -114,11 +115,11 @@ Creators upload video, audio, images, documents and files once, then place them 
 ### Decisions for Rob
 
 1. **Storage and CDN vendor.** Recommended: AWS S3 private bucket plus CloudFront. It keeps one cloud, reuses existing IAM and code, and gets native GuardDuty scanning. Alternative: Cloudflare R2 plus Workers. It has no egress fee and becomes cheaper above about 20 TB per month.
-2. **Video and audio vendor.** Recommended: Mux. Best signed playback model, audio support, a player with preview support, and 100k free delivery minutes per month. Alternatives: Bunny Stream for lowest cost, Cloudflare Stream for simplest pricing. Self hosted MediaConvert plus HLS is not recommended. It adds encoding jobs, packaging and signed cookie logic we do not need to own.
-3. **Adult content policy.** Recommended: no sexually explicit content in v1. Reasons: app store rules, card network rules for adult merchants once payments return, and US state age verification laws that the Supreme Court upheld in 2025 (Free Speech Coalition v. Paxton). Images and video thumbnails run through a classifier. Likely explicit items are held for human review. The alternative is to allow adult content behind age verification. That is a separate project.
-4. **CSAM detection vendor.** Recommended: apply for Microsoft PhotoDNA Cloud Service now. It is free for vetted organizations, but vetting takes time. Thorn Safer is the paid alternative and adds video hashing and a direct NCMEC reporting integration. The Cloudflare CSAM Scanning Tool is not sufficient on its own. It only scans content cached through Cloudflare, which private signed content is not. Launch is blocked until one of these is live.
+2. **Video and audio vendor.** Answered by Rob, 2026-10-08: Cloudflare Stream. The recommendation was Mux. Why Rob chose it: one vendor and one account for uploaded video and live streaming (#27), simple pricing with no egress line. What changes: video assets are Stream videos with `requireSignedURLs`, playback uses Stream signed tokens through the shared player (Fan Library #26: HLS with hls.js, native HLS on Safari), locked previews are separate clip videos made with the Stream clipping API, and the webhook is Stream's. Stream takes no audio only files, so audio is transcoded by our worker to AAC and served from S3 plus CloudFront with signed URLs. No DRM. Mux and Bunny stay as alternatives behind the adapter.
+3. **Adult content policy.** Answered by Rob, 2026-10-08: allow sexually explicit content behind age verification. The recommendation was none in v1. The rules live on Build Board #28 (Adult content). What this spec takes from it: creators label an item 18+ (`ContentItem.adult`), the classifier still runs and holds explicit items that are not labeled, labeled items are served only to viewers who passed the #28 age check (Rob chose verification in the states and countries whose laws require it, a dated 18+ confirmation elsewhere), and 18+ items never appear on the public bio, in SEO or share previews, in email or push, or in the Telegram surfaces. Fan payments are USDC wallet to wallet, so card network adult rules do not apply to them; the card on-ramp sits in Wallet only. Adult creators pass ID and liveness and keep 2257 records before 18+ is enabled. Live adult streams stay off in v1. App store rules still bar explicit content from any native app.
+4. **CSAM detection vendor.** Rob marked this to discuss (2026-10-08). The application to PhotoDNA proceeds meanwhile because vetting takes weeks and costs nothing. Recommended: apply for Microsoft PhotoDNA Cloud Service now. It is free for vetted organizations, but vetting takes time. Thorn Safer is the paid alternative and adds video hashing and a direct NCMEC reporting integration. The Cloudflare CSAM Scanning Tool is not sufficient on its own. It only scans content cached through Cloudflare, which private signed content is not. Launch is blocked until one of these is live.
 5. **Default quotas.** Recommended: 5 GB storage and 300 video minutes per creator. 2 GB per video file, 500 MB per audio or ZIP file, 100 MB per document, 25 MB per image. All values are environment configurable, the same pattern as today's `UPLOAD_LIMIT_*` variables.
-6. **Members-only content review.** Gating content on a token stake ties a benefit to holding a crypto asset. Securities counsel must review it before Phase 2 ships or is marketed. The spec keeps all copy access focused: staking unlocks membership benefits, never returns.
+6. **Members-only content review.** Answered by Rob, 2026-10-08: ship and review in parallel, matching the gating engine decision 8. Gating content on a token stake ties a benefit to holding a crypto asset, so securities counsel receives the copy and mechanics before Phase 2 ships and their changes are applied as a follow up. Phase 2 does not wait for sign off. The spec keeps all copy access focused: staking unlocks membership benefits, never returns.
 
 ## 3. Detailed spec
 
@@ -298,7 +299,7 @@ model ContentAsset {
   storage              ContentAssetStorage
   uploaded_file_id     Int? // set for ORIGINAL, so all user bytes are counted in one table
   s3_key               String?             @db.VarChar(255)
-  provider             String?             @db.VarChar(20) // "mux"
+  provider             String?             @db.VarChar(20) // "cloudflare_stream"
   provider_asset_id    String?             @db.VarChar(100)
   provider_playback_id String?             @db.VarChar(100)
   mime_type            String?             @db.VarChar(100)
@@ -400,13 +401,13 @@ model BlockedContentHash {
 | `quarantine/{publicId}/...` | Malware positives, for review | Trust and safety role | Expire after 30 days |
 
 - Keys use `publicId`, never the numeric user id.
-- Video and audio originals go to Mux and are deleted from `incoming/` once Mux reports the asset ready, unless download is allowed.
+- Video originals go to Cloudflare Stream and are deleted from `incoming/` once Stream reports the video ready, unless download is allowed. Audio originals are transcoded by the worker; the AAC rendition lives in `originals/` and the upload is deleted unless download is allowed.
 - The existing public bucket `amped-bio` is unchanged in v1.
 
 ### 3.5 Upload pipeline
 
 ```
-client                    server (tRPC)                  S3 / queue / worker                 Mux
+client                    server (tRPC)                  S3 / queue / worker                 Cloudflare Stream
   | createUpload --------> | allowlist, quota reserve    |                                   |
   |                        | ContentItem UPLOADING       |                                   |
   |<-- uploadId, parts ----| CreateMultipartUpload ----->|                                   |
@@ -433,19 +434,20 @@ client                    server (tRPC)                  S3 / queue / worker    
    4. **Normalize.**
       - Images: re-encode with sharp. EXIF, GPS and XMP removed. Longest side capped at 4096 px. Output WebP and JPEG renditions at 320, 640, 1280 and full. The original is not kept.
       - Documents: render page 1 to 3 previews, remove document metadata, keep the original in `originals/`.
-      - Video and audio: create a Mux asset from a 1 hour presigned GET of the original with `playback_policy: ["signed"]` and basic quality. Transcoding strips container metadata.
-   5. **Previews.** A 32 px blurred cover for locked cards. Audio waveform JSON. Poster frame for video from Mux.
-   6. **Moderation classifier** (v1 default, per Decision 3). Images and 5 video thumbnails go to Rekognition `DetectModerationLabels`. Explicit nudity above 80% confidence sets `moderation_state = HELD`. Held items cannot be published until a reviewer clears them.
+      - Video: create a Stream video by URL (`POST /stream/copy`) from a 1 hour presigned GET of the original with `requireSignedURLs: true`, `allowedOrigins: ["amped.bio", "app.amped.bio"]` and `meta.contentItemId`. Transcoding strips container metadata. When `preview_config.seconds` is set, the worker also calls the clipping API (`POST /stream/clip`, `clippedFromVideoUID`, 0 to preview seconds) and stores the clip as a second `ContentAsset` with role PREVIEW.
+      - Audio: the worker transcodes with ffmpeg to AAC in an m4a container, strips metadata, and writes it to `originals/`. Served from CloudFront with signed URLs.
+   5. **Previews.** A 32 px blurred cover for locked cards. Audio waveform JSON. Poster frame for video from the Stream thumbnail endpoint, fetched once with a token and stored in `renditions/`.
+   6. **Moderation classifier** (per Decision 3). Images and 5 video thumbnails go to Rekognition `DetectModerationLabels`. Explicit nudity above 80% confidence on an item the creator labeled 18+ sets `adult = true` and continues. The same result on an item not labeled 18+ sets `moderation_state = HELD`. Held items cannot be published until a reviewer clears them or the creator labels the item 18+ and the creator has 18+ enabled (#28).
    7. Set READY. Move reserved bytes to used. Add video minutes. Send an in app notice.
 5. **Failure handling.** Any step error retries 3 times with backoff, then sets FAILED with a creator safe reason. Items in UPLOADING for 24 hours or PROCESSING for 2 hours are failed by a sweep job and their reserved bytes released.
-6. **Mux webhook** `POST /webhooks/mux` on the Express app. Verifies the `mux-signature` header. Handles `video.asset.ready` and `video.asset.errored`.
+6. **Stream webhook** `POST /webhooks/cloudflare-stream` on the Express app. Verifies the `Webhook-Signature` header (HMAC SHA-256 over time and body with the webhook secret, 5 minute window). Handles `readyToStream: true` (READY) and `status.state: "error"` (FAILED). Clips raise their own ready event.
 
 ### 3.6 Delivery
 
 - **CloudFront distribution** on a separate registrable domain, for example `ampedusercontent.com`. Origin is the private bucket through OAC. The behavior requires a trusted key group. The cache policy excludes query strings from the cache key, so signed URLs still hit cache.
 - **Response headers policy:** `X-Content-Type-Options: nosniff`, `Content-Security-Policy: sandbox; default-src 'none'`, `Cross-Origin-Resource-Policy: cross-origin`, and `Cache-Control: private, max-age=300` for signed responses. Downloadable originals are stored with `Content-Disposition: attachment`.
 - **Signing key** lives in AWS Secrets Manager. The server signs with `@aws-sdk/cloudfront-signer`. Keys rotate yearly with two keys active in the key group during rotation.
-- **Video and audio** play through Mux Player with a playback JWT signed by our Mux signing key. Thumbnail and storyboard tokens are issued separately. Playback restrictions allow referrers `amped.bio` and `app.amped.bio` only.
+- **Video** plays in the shared player (Fan Library #26) from the Stream HLS manifest, DASH for Chromecast later, with a signed token: an RS256 JWT with `sub` (video id), `kid`, `exp`, `nbf`, signed by our Stream signing key. Thumbnails use the same token. `allowedOrigins` on every video are `amped.bio` and `app.amped.bio`. The Stream iframe player is not used in the app. **Audio** plays in a native `audio` element from a CloudFront signed URL.
 
 | Asset | Public item TTL | Gated item TTL |
 |---|---|---|
@@ -453,15 +455,16 @@ client                    server (tRPC)                  S3 / queue / worker    
 | Blur preview | 24 hours, served to everyone | 24 hours, served to everyone |
 | Document viewer (PDF) | 1 hour | 5 minutes |
 | Download (original) | 5 minutes | 2 minutes, single use |
-| Mux playback token | duration plus 30 minutes, max 6 hours | duration plus 10 minutes, max 4 hours |
-| Mux preview token (clip to preview seconds) | not used | 1 hour |
+| Audio (AAC original) | 24 hours | duration plus 10 minutes, max 4 hours |
+| Stream playback token | duration plus 30 minutes, max 6 hours | duration plus 10 minutes, max 4 hours |
+| Stream preview clip token (separate clip video) | not used | 1 hour |
 
 - **Access check.** Follows the engine contract (3.1.4). The client calls `access.check({ resource: { type: "content", id } })` to render the locked or open state. To open, it calls `access.issueGrant`, then `content.getReadUrl({ contentItemId, grant })`. `getReadUrl` calls `verifyAccessGrant` and signs URLs whose expiry is `min(TTL in the table, grant exp minus now)`. Public items need no grant. Locked viewers get only the blur preview and the preview clip from `content.getPreview`.
 - **Downloads** are single use. `getReadUrl` records the grant `jti` in Redis with `SET NX EX 600` for download requests.
-- **Contract note.** This spec signs CloudFront URLs over the private bucket with the engine's 5 minute ceiling, and Mux tokens for streams. The gating engine spec 3.1.4 records this.
-- **Preview clips.** Mux supports clipping by `asset_start_time` and `asset_end_time` in the playback token for signed assets. The preview token carries `0` and `preview_config.seconds`, so a locked fan cannot request the full stream.
+- **Contract note.** This spec signs CloudFront URLs over the private bucket with the engine's 5 minute ceiling, and Stream tokens for video. Audio URLs for gated items follow the stream rule (duration plus 10 minutes) because a signed URL that expires mid play stops playback. The gating engine spec 3.1.4 records this.
+- **Preview clips.** Stream tokens carry no time range, so a locked fan must never hold a token for the full video. The preview is a separate clip video made at processing time (3.5). `content.getPreview` signs a token for the clip's id only. For audio, the preview is a separate AAC file cut by the worker.
 - **Revocation.** When a fan unstakes, access ends at the next URL refresh. Files: at most 5 minutes. The client refreshes the grant and URLs 60 seconds before expiry.
-- **Stream exception.** Mux checks the token on every segment and cuts playback when it expires. A stream token therefore lives for the item duration plus 10 minutes, capped at 4 hours, even though the grant lives 10 minutes. A fan who unstakes mid video finishes that play session and is blocked on the next one. The gating engine spec accepts this exception (3.1.4 and 3.6).
+- **Stream exception.** Stream checks the token on every segment request and cuts playback when it expires. A stream token therefore lives for the item duration plus 10 minutes, capped at 4 hours, even though the grant lives 10 minutes. A fan who unstakes mid video finishes that play session and is blocked on the next one. The gating engine spec accepts this exception (3.1.4 and 3.6).
 - **SSR rule.** The Next.js bio and content pages render gated items in the locked state with blur previews only. Full URLs for gated items are fetched by the browser after hydration. They never appear in server HTML or in page caches.
 - **Broadcast attachments.** A broadcast references items by `ContentItem.id`. `getReadUrl` accepts a grant for `{ type: "broadcast", id }` in place of a content grant. The server confirms the item is attached to that broadcast before signing. Email and push never carry media URLs, only a link back to Amped.
 
@@ -525,7 +528,7 @@ export const contentConfigSchema = z.object({
 - **Repeat infringer policy.** Three valid strikes in 12 months terminates the account. Strikes are recorded in `CopyrightNotice`. The policy is stated in the Terms of Service.
 - **Hash blocklist.** Items removed for copyright or malware add their SHA-256 to `BlockedContentHash`. Re-uploads of the same file are rejected.
 - **CSAM.** Hash matching is a launch requirement. A match blocks the item, suspends the account and removes all of the user's content from delivery. The file and required metadata move to a separate evidence bucket with its own IAM role and object lock. A report goes to the NCMEC CyberTipline as 18 U.S.C. 2258A requires. Evidence is preserved for 1 year as the REPORT Act (2024) requires. Staff do not open matched files. Written procedures are prepared with counsel before launch.
-- **Adult content.** Per Decision 3. Default is no sexually explicit content, enforced by classifier plus human review.
+- **Adult content.** Per Decision 3 and #28. Allowed behind the age check. Creator labels plus the classifier backstop. 18+ items are excluded from every public surface and never served to a viewer who has not passed the check.
 - **Terms and content policy.** Update Terms of Service and add a Content Policy covering prohibited content, rights warranty, license to host and display, and enforcement.
 
 **Technical.**
@@ -538,7 +541,7 @@ export const contentConfigSchema = z.object({
 - Signed URLs only. No public ACLs on the content bucket.
 - Presigned upload URLs bind length and type.
 - Storage quotas per user. Global kill switch env `CONTENT_UPLOADS_ENABLED` stops new uploads during an incident.
-- The Mux signing key and CloudFront private key live in Secrets Manager, not in env files.
+- The Stream signing key (from `POST /stream/keys`), the Stream API token, the webhook secret and the CloudFront private key live in Secrets Manager, not in env files.
 - Logs never include full signed URLs.
 
 **Copy and marketing guardrails.** One list covers product copy (library, upload flow, item editor, content block, content page) and content marketing. It matches the business overview's "Compliance guardrails for marketing".
@@ -549,7 +552,7 @@ export const contentConfigSchema = z.object({
 - **Required disclosure.** The locked page states that staking unlocks membership benefits, is not a purchase of content and carries no promise of return. Fixed text, the constant `CONTENT_LOCKED_DISCLOSURE`: "Staking unlocks membership benefits. It is not a purchase of content and carries no promise of return." The engine's `ACCESS_STAKE_DISCLOSURE` shows with it. Keep both in screenshots.
 - **CSAM.** Known-CSAM hash matching is a launch requirement. Matches are reported to NCMEC. Say "every upload is scanned before it goes live". Never claim "100% safe".
 - **DMCA.** Register the designated agent and publish a copyright policy before launch. Do not use phrases like "share anything" that suggest creators can post work they do not own. Three valid strikes in 12 months ends an account.
-- **Adult content.** v1 does not allow sexually explicit content. Do not recruit adult creators or imply it is allowed.
+- **Adult content.** Allowed behind age verification (#28). Marketing never shows or links 18+ items. Adult creator recruitment waits for the #28 age assurance vendor and the 2257 process to be live.
 - **Protection claims.** Say "streams through a protected player". Never claim files "cannot be copied" or use the word DRM.
 - **Privacy.** Location data is stripped from images. Creator emails never appear on content pages, and the D1 fix must ship first.
 - **Deletion.** Say "delete anytime, removed within 30 days". This matches the GDPR commitment in 3.10.
@@ -560,8 +563,8 @@ export const contentConfigSchema = z.object({
 
 ### 3.10 Retention and deletion
 
-- **Item delete.** Soft delete sets DELETED and `purge_after = now + 30 days`. The item stops serving at once. A daily job hard deletes S3 objects, the Mux asset, `ContentAsset` rows and releases quota.
-- **Account delete.** All items stop serving at once. Hard deletion of every object and Mux asset completes within 30 days, which meets the GDPR one month response window. This depends on the account deletion flow noted in 1.2.
+- **Item delete.** Soft delete sets DELETED and `purge_after = now + 30 days`. The item stops serving at once. A daily job hard deletes S3 objects, the Stream video and its clip, `ContentAsset` rows and releases quota.
+- **Account delete.** All items stop serving at once. Hard deletion of every object and Stream video completes within 30 days, which meets the GDPR one month response window. This depends on the account deletion flow noted in 1.2.
 - **Legal holds.** CSAM evidence (1 year) and DMCA records (3 years) are kept outside user tables and are exempt from erasure.
 - **Data export.** A user export includes item metadata and download links for originals that still exist.
 - **Backups.** Bucket versioning stays off for the content bucket. Database backups age out on the existing schedule, so deleted rows leave backups within that window.
@@ -618,7 +621,7 @@ Creator stats shown in the library (views, plays, opens) come from `content_view
 9. A fan without the rule gets `allowed: false`, the blur preview and the preview clip only. Requesting the full stream with a preview token fails.
 10. A fan who stakes the minimum gets access on the next `issueGrant` and `getReadUrl` call without reloading the page.
 11. A fan who unstakes loses access no later than the gated TTL.
-12. Deleting an item stops delivery at once. Objects and the Mux asset are gone after the purge job.
+12. Deleting an item stops delivery at once. Objects and the Stream videos are gone after the purge job.
 13. No content procedure returns an email address or numeric user id.
 14. `pnpm run typecheck` and `pnpm run build` pass.
 15. No part of the upload path sends file bytes through the Vercel function.
@@ -627,7 +630,7 @@ Creator stats shown in the library (views, plays, opens) come from `content_view
 18. `handle.getHandle` and every content page return no creator email (D1 fix) before Phase 1 launches.
 19. `getReadUrl` refuses items that are not READY, not moderation CLEAR, or have an asset whose scan is not CLEAN or an allowed SKIPPED.
 20. A valid DMCA notice recorded in the admin tool disables the item, notifies the creator and writes `dmca_notice_actioned` with `within_one_business_day`.
-21. An image the classifier flags as explicit is HELD and cannot be published until a reviewer clears it.
+21. An image the classifier flags as explicit and the creator did not label 18+ is HELD and cannot be published until a reviewer clears it. A labeled 18+ item is never returned by any public procedure, share preview or feed, and `getReadUrl` refuses it for a viewer without a passed age check.
 22. On staging, every event in 3.11 fires, and each KPI in the KPI to event table computes from those events.
 
 ### 3.13 Phased rollout
@@ -640,7 +643,7 @@ Timings follow the business overview launch plan. All dates are proposed.
 - Fix the creator email exposure (D1) in `handle.getHandle`.
 - Create the private bucket, CloudFront distribution, user content domain, key group and Secrets Manager entries.
 - Register the DMCA agent. Apply for PhotoDNA now, since vetting takes time. Prepare the Content Policy and ToS updates with counsel.
-- Sign the Mux account and create the signing key.
+- Enable Stream on the Cloudflare account shared with live streaming (#27), create the signing key and the webhook subscription.
 - Recruit 25 pilot creators.
 
 **Phase 1. Free content (December 2026, once CSAM matching is live, proposed; 3 to 4 weeks of build).**
@@ -657,7 +660,7 @@ Timings follow the business overview launch plan. All dates are proposed.
 - Rule picker in the editor, locked cards and locked preview page.
 - `access.issueGrant` and `content.getReadUrl` wired with `verifyAccessGrant`. Resolver registered for `"content"`.
 - Broadcast attachments.
-- Launch gate: securities counsel sign off on gating copy and mechanics. Members-only content is not marketed before that sign off.
+- Counsel review of gating copy and mechanics runs in parallel (Decision 6, Rob 2026-10-08). Counsel receives the materials before Phase 2 ships; their changes are applied as a follow up. No sign off gate.
 
 **Phase 3. Later, no date.**
 - Paid unlock through the `paid` rule when payments resume.
@@ -672,9 +675,11 @@ Timings follow the business overview launch plan. All dates are proposed.
 - Stan Store digital downloads: https://help.stan.store/article/14-sell-a-digital-download-product
 - Linktree digital products: https://linktr.ee/help/en/articles/10631437-how-to-share-and-sell-digital-products-on-your-linktree
 - Substack video posts: https://support.substack.com/hc/en-us/articles/21093671091220-Guide-to-video-posts-on-Substack
-- Mux secure video playback: https://www.mux.com/docs/guides/secure-video-playback
-- Mux pricing: https://www.mux.com/pricing
-- Mux DRM: https://www.mux.com/docs/guides/protect-videos-with-drm
+- Cloudflare Stream, secure your Stream (signed tokens): https://developers.cloudflare.com/stream/viewing-videos/securing-your-stream/
+- Cloudflare Stream, upload via link: https://developers.cloudflare.com/stream/uploading-videos/upload-via-link/
+- Cloudflare Stream, clip videos: https://developers.cloudflare.com/stream/edit-videos/video-clipping/
+- Cloudflare Stream, webhooks: https://developers.cloudflare.com/stream/manage-video-library/using-webhooks/
+- Mux pricing (alternative): https://www.mux.com/pricing
 - Cloudflare Stream pricing: https://developers.cloudflare.com/stream/pricing/
 - Bunny Stream pricing: https://bunny.net/pricing/stream/
 - CloudFront signed URLs or signed cookies: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-choosing-signed-urls-cookies.html
@@ -690,3 +695,5 @@ Timings follow the business overview launch plan. All dates are proposed.
 ## Revision log
 
 2026-09-26: aligned with business overview (added overview link; "gated" visibility renamed Members only in product copy and phase names; D1 named and made a Phase 1 launch gate; locked page action changed from a one-tap stake flow to the pool page, matching the gating engine; locked page disclosure fixed as a constant shown with the engine disclosure; adult content classifier made the v1 default; stream exception and CloudFront wording marked as accepted by the gating engine spec; `getReadUrl` safety guard added; `CopyrightNotice.valid` added; banned words, approved alternatives, disclosure and CSAM, DMCA, adult, protection, privacy, deletion, paid and FTC rules matched to the overview as one product plus marketing list; build-time copy check added; upload id, ready time, unsafe served, DMCA and adoption snapshot events plus a KPI to event table added; phases given proposed timings, 25 pilot creators, the D1 and CSAM gates and the gating before members-only content dependency; acceptance criteria 16 to 22 added).
+
+2026-10-08: Rob's decisions applied. Decision 2: Cloudflare Stream replaces Mux for video (research row, cost table, 3.3 provider, 3.4 keys, 3.5 pipeline and webhook, 3.6 playback, TTL table, preview clips, 3.8 secrets, deletion, acceptance 12, Phase 0, sources); audio served from S3 plus CloudFront. Decision 3: adult content allowed behind age verification per #28 (classifier step, trust and safety, marketing, acceptance 21). Decision 4: CSAM vendor marked to discuss; PhotoDNA application proceeds. Decision 6: Phase 2 counsel review runs in parallel, no sign off gate.
